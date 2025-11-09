@@ -34,7 +34,6 @@ export default function CheckInPage() {
   const [selectedPersonId, setSelectedPersonId] = useState<string>(
     activeTree?.members[0]?.id || ''
   );
-  const [showSuccess, setShowSuccess] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -60,9 +59,9 @@ export default function CheckInPage() {
   }, [appState.notifications, appState.activeFamilyTreeId]);
 
   const handleSubmit = () => {
-    if (!selectedPersonId) return;
+    if (!selectedPersonId || !activeTree) return;
 
-    const selectedPerson = activeTree?.members.find((m) => m.id === selectedPersonId);
+    const selectedPerson = activeTree.members.find((m) => m.id === selectedPersonId);
     if (!selectedPerson) return;
 
     const newCheckIn: CheckIn = {
@@ -76,16 +75,20 @@ export default function CheckInPage() {
       treeId: appState.activeFamilyTreeId,
     };
 
-    // Add to check-ins and notifications
+    // Update tree score based on check-in (+3 points for any check-in)
+    const currentScore = activeTree.treeScore || 0;
+    const newScore = Math.min(100, currentScore + 3);
+    const updatedTrees = appState.trees.map((tree) =>
+      tree.id === appState.activeFamilyTreeId ? { ...tree, treeScore: newScore } : tree
+    );
+
+    // Add to check-ins and notifications, update tree score
     setAppState({
       ...appState,
+      trees: updatedTrees,
       checkIns: [newCheckIn, ...(appState.checkIns || [])],
       notifications: [newCheckIn, ...(appState.notifications || [])],
     });
-
-    // Show success animation
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 2000);
 
     // Reset form
     setMood(3);
@@ -168,23 +171,6 @@ export default function CheckInPage() {
           animate={{ opacity: 1, scale: 1 }}
           className="bg-gradient-to-br from-white via-sage/5 to-sage/10 rounded-2xl shadow-xl p-8 mb-8 border-2 border-sage/30"
         >
-          {/* Success Message */}
-          <AnimatePresence>
-            {showSuccess && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="absolute inset-0 bg-green-500/90 rounded-2xl flex items-center justify-center z-50"
-              >
-                <div className="text-center text-white">
-                  <div className="text-6xl mb-2">✓</div>
-                  <p className="text-xl font-bold">Check-in saved!</p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
           {/* Person Selector */}
           {activeTree && activeTree.members.length > 1 && (
             <div className="mb-6">
