@@ -21,9 +21,10 @@ export default function MemoriesPage() {
     lastExpandedAlbum: {},
   });
 
-  const albums = appState.albums[appState.activeFamilyTreeId] || [];
+  // Safely access albums, initializing from albumsData if undefined
+  const albums = appState.albums?.[appState.activeFamilyTreeId] || albumsData[appState.activeFamilyTreeId] || [];
   const [expandedAlbum, setExpandedAlbum] = useState<string | null>(
-    appState.lastExpandedAlbum[appState.activeFamilyTreeId] || null
+    appState.lastExpandedAlbum?.[appState.activeFamilyTreeId] || null
   );
   const [lightboxMemory, setLightboxMemory] = useState<Memory | null>(null);
   const [lightboxPhotoIndex, setLightboxPhotoIndex] = useState(0);
@@ -41,8 +42,9 @@ export default function MemoriesPage() {
     setExpandedAlbum(newExpanded);
     setAppState({
       ...appState,
+      albums: appState.albums || {},
       lastExpandedAlbum: {
-        ...appState.lastExpandedAlbum,
+        ...(appState.lastExpandedAlbum || {}),
         [appState.activeFamilyTreeId]: newExpanded,
       },
     });
@@ -196,7 +198,7 @@ export default function MemoriesPage() {
           onClose={() => setShowAddAlbumModal(false)}
           onAdd={(newAlbum) => {
             const updatedAlbums = {
-              ...appState.albums,
+              ...(appState.albums || {}),
               [appState.activeFamilyTreeId]: [...albums, newAlbum],
             };
             setAppState({ ...appState, albums: updatedAlbums });
@@ -226,7 +228,7 @@ export default function MemoriesPage() {
               setAppState({
                 ...appState,
                 albums: {
-                  ...appState.albums,
+                  ...(appState.albums || {}),
                   [appState.activeFamilyTreeId]: updatedAlbums,
                 },
               });
