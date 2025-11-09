@@ -21,6 +21,8 @@ export default function TreePage() {
     albums: {},
     lastExpandedMemory: {},
     lastExpandedAlbum: {},
+    checkIns: [],
+    notifications: [],
   });
 
   const activeTree = appState.trees.find((t) => t.id === appState.activeFamilyTreeId);

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 /**
- * Bottom navigation bar with 4 main tabs
+ * Bottom navigation bar with 5 main tabs
  */
 export default function Navigation() {
   const pathname = usePathname();
@@ -12,6 +12,7 @@ export default function Navigation() {
   const tabs = [
     { name: 'Tree', path: '/tree', icon: '🌳' },
     { name: 'Family Tree', path: '/family-tree', icon: '👨‍👩‍👧‍👦' },
+    { name: 'Check-In', path: '/check-in', icon: '💚' },
     { name: 'Activities', path: '/activities', icon: '✨' },
     { name: 'Memories', path: '/memories', icon: '📸' },
   ];

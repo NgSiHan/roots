@@ -19,6 +19,8 @@ export default function MemoriesPage() {
     albums: albumsData,
     lastExpandedMemory: {},
     lastExpandedAlbum: {},
+    checkIns: [],
+    notifications: [],
   });
 
   // Safely access albums, initializing from albumsData if undefined
@@ -353,9 +355,9 @@ function MemoryCard({
         {stackPhotos.map((photo, index) => (
           <motion.div
             key={photo.id}
-            className="absolute rounded-lg shadow-lg"
+            className="absolute rounded-lg shadow-lg overflow-hidden"
             style={{
-              backgroundColor: photo.color,
+              backgroundColor: photo.url ? 'transparent' : photo.color,
               left: `${index * 12}px`,
               top: `${index * 8}px`,
               width: `calc(100% - ${index * 24}px)`,
@@ -367,9 +369,17 @@ function MemoryCard({
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: index * 0.1 }}
           >
-            <div className="w-full h-full flex items-center justify-center text-white text-3xl">
-              📷
-            </div>
+            {photo.url ? (
+              <img
+                src={photo.url}
+                alt={photo.caption}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-white text-3xl">
+                📷
+              </div>
+            )}
           </motion.div>
         ))}
         {memory.photos.length > 3 && (
@@ -452,14 +462,28 @@ function PhotoLightbox({
               exit={{ x: direction > 0 ? -300 : 300, opacity: 0, rotate: direction > 0 ? -10 : 10 }}
               transition={{ duration: 0.4, type: 'spring', stiffness: 300, damping: 30 }}
               className="absolute inset-0 flex items-center justify-center"
-              style={{ backgroundColor: currentPhoto.color }}
+              style={{ backgroundColor: currentPhoto.url ? 'transparent' : currentPhoto.color }}
             >
-              <div className="text-white text-center">
-                <div className="text-8xl mb-4">📷</div>
-                <p className="text-lg font-medium">{currentPhoto.caption}</p>
-              </div>
+              {currentPhoto.url ? (
+                <img
+                  src={currentPhoto.url}
+                  alt={currentPhoto.caption}
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <div className="text-white text-center">
+                  <div className="text-8xl mb-4">📷</div>
+                  <p className="text-lg font-medium">{currentPhoto.caption}</p>
+                </div>
+              )}
             </motion.div>
           </AnimatePresence>
+          {/* Caption overlay for real photos */}
+          {currentPhoto.url && (
+            <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-4 text-center">
+              <p className="text-lg font-medium">{currentPhoto.caption}</p>
+            </div>
+          )}
         </div>
 
         {/* Navigation Buttons */}
@@ -626,31 +650,67 @@ function AddMemoryModal({
 }) {
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
-  const [photoCount, setPhotoCount] = useState(5);
+  const [uploadedPhotos, setUploadedPhotos] = useState<Photo[]>([]);
+  const [uploading, setUploading] = useState(false);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    const newPhotos: Photo[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      // Convert to base64
+      const reader = new FileReader();
+      const photoPromise = new Promise<Photo>((resolve) => {
+        reader.onload = (event) => {
+          const base64 = event.target?.result as string;
+          resolve({
+            id: `photo-${Date.now()}-${i}`,
+            url: base64,
+            caption: file.name.replace(/\.[^/.]+$/, ''), // Remove extension
+            color: '#E8C4D4', // Not used when we have real images
+          });
+        };
+      });
+
+      reader.readAsDataURL(file);
+      const photo = await photoPromise;
+      newPhotos.push(photo);
+    }
+
+    setUploadedPhotos([...uploadedPhotos, ...newPhotos]);
+    setUploading(false);
+  };
+
+  const removePhoto = (index: number) => {
+    setUploadedPhotos(uploadedPhotos.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = () => {
-    if (!title.trim()) return;
-
-    // Generate photos automatically
-    const colors = ['#E8C4D4', '#F5E6D3', '#E8D4C4', '#C8B6A6', '#A8C69F', '#B8D4E8', '#D4E8C4', '#E8D4F5'];
-    const photos: Photo[] = Array.from({ length: photoCount }, (_, i) => ({
-      id: `photo-${Date.now()}-${i}`,
-      url: '',
-      caption: `Photo ${i + 1}`,
-      color: colors[i % colors.length],
-    }));
+    if (!title.trim() || uploadedPhotos.length === 0) return;
 
     const newMemory: Memory = {
       id: `memory-${Date.now()}`,
       title: title.trim(),
       date: date || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-      photos,
+      photos: uploadedPhotos,
     };
 
     onAdd(newMemory);
     setTitle('');
     setDate('');
-    setPhotoCount(5);
+    setUploadedPhotos([]);
+  };
+
+  const handleClose = () => {
+    setTitle('');
+    setDate('');
+    setUploadedPhotos([]);
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -696,34 +756,73 @@ function AddMemoryModal({
             />
           </div>
 
+          {/* Photo Upload */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Number of Photos: {photoCount}
+              Upload Photos
             </label>
             <input
-              type="range"
-              min="1"
-              max="30"
-              value={photoCount}
-              onChange={(e) => setPhotoCount(Number(e.target.value))}
-              className="w-full"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handlePhotoUpload}
+              className="hidden"
+              id="photo-upload"
             />
-            <p className="text-xs text-gray-500 mt-1">
-              Demo mode: Photos will be generated automatically
+            <label
+              htmlFor="photo-upload"
+              className="block w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-moss hover:bg-gray-50 transition-colors"
+            >
+              <div className="text-gray-600">
+                <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                <span className="text-sm font-medium">
+                  {uploading ? 'Uploading...' : 'Click to upload photos'}
+                </span>
+                <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 10MB each</p>
+              </div>
+            </label>
+
+            {/* Photo Previews */}
+            {uploadedPhotos.length > 0 && (
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {uploadedPhotos.map((photo, index) => (
+                  <div key={photo.id} className="relative group">
+                    <img
+                      src={photo.url}
+                      alt={photo.caption}
+                      className="w-full h-24 object-cover rounded-lg"
+                    />
+                    <button
+                      onClick={() => removePhoto(index)}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                    <p className="text-xs text-gray-600 mt-1 truncate">{photo.caption}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-gray-500 mt-2">
+              {uploadedPhotos.length} photo{uploadedPhotos.length !== 1 ? 's' : ''} uploaded
             </p>
           </div>
         </div>
 
         <div className="flex gap-3 mt-6">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!title.trim()}
+            disabled={!title.trim() || uploadedPhotos.length === 0 || uploading}
             className="flex-1 px-6 py-3 bg-moss text-white rounded-xl font-semibold hover:bg-moss/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
           >
             Add Memory

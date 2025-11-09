@@ -80,6 +80,17 @@ export interface MemoryCollection {
   photos: Photo[];
 }
 
+export interface CheckIn {
+  id: string;
+  personId: string;
+  personName: string;
+  mood: number; // 1-5
+  emoji: string;
+  note?: string;
+  timestamp: string; // ISO date string
+  treeId: string;
+}
+
 export interface AppState {
   activeFamilyTreeId: string;
   trees: FamilyTree[];
@@ -88,4 +99,6 @@ export interface AppState {
   albums: Record<string, Album[]>; // keyed by tree id - new structure
   lastExpandedMemory: Record<string, string | null>; // keyed by tree id
   lastExpandedAlbum: Record<string, string | null>; // keyed by tree id
+  checkIns: CheckIn[]; // All check-ins across all trees
+  notifications: CheckIn[]; // Recent check-ins to notify about
 }
