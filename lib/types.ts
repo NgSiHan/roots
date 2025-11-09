@@ -9,6 +9,8 @@ export interface FamilyTree {
   treeScore: number; // 0-100 for Tree of Love
   members: Person[];
   activities: ActivityStats;
+  completedActivities?: CompletedActivity[]; // Track completed activities with timestamps
+  lastActivityDate?: string; // ISO date string of last completed activity
 }
 
 export interface Person {
@@ -29,11 +31,21 @@ export interface ActivityStats {
   skipped: number;
 }
 
+export type ActivityCategory = 'bonding' | 'fun' | 'learning' | 'health' | 'creative' | 'outdoor';
+
 export interface Activity {
   id: string;
   title: string;
   description: string;
+  category: ActivityCategory;
+  duration: string; // e.g., "30 mins", "1-2 hours"
   tags: string[];
+}
+
+export interface CompletedActivity {
+  activityId: string;
+  completedAt: string; // ISO date string
+  participantIds: string[]; // Which family members participated
 }
 
 export interface MemoryCollection {
