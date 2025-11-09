@@ -16,6 +16,142 @@ const GENERATION_COLORS = [
 ];
 
 /**
+ * Add Person Modal
+ */
+function AddPersonModal({
+  type,
+  onClose,
+  onAdd,
+}: {
+  type: 'parents' | 'spouse' | 'child';
+  onClose: () => void;
+  onAdd: (person: Partial<Person>) => void;
+}) {
+  const [name, setName] = useState('');
+  const [birthYear, setBirthYear] = useState<number | undefined>(undefined);
+  const [gender, setGender] = useState<'male' | 'female' | 'other'>('male');
+
+  const handleSubmit = () => {
+    if (!name.trim()) {
+      alert('Please enter a name');
+      return;
+    }
+
+    onAdd({
+      name: name.trim(),
+      birthYear,
+      gender,
+    });
+    onClose();
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8"
+      >
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">
+          Add {type === 'parents' ? 'Parent' : type === 'spouse' ? 'Spouse' : 'Child'}
+        </h2>
+
+        <div className="space-y-4 mb-6">
+          {/* Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moss"
+              placeholder="Enter name"
+              autoFocus
+            />
+          </div>
+
+          {/* Birth Year */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Birth Year (Optional)</label>
+            <input
+              type="number"
+              value={birthYear || ''}
+              onChange={(e) => setBirthYear(e.target.value ? parseInt(e.target.value) : undefined)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moss"
+              placeholder="YYYY"
+            />
+          </div>
+
+          {/* Gender */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setGender('male')}
+                className={`flex-1 py-2 px-4 rounded-xl font-semibold transition-all ${
+                  gender === 'male'
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Male
+              </button>
+              <button
+                type="button"
+                onClick={() => setGender('female')}
+                className={`flex-1 py-2 px-4 rounded-xl font-semibold transition-all ${
+                  gender === 'female'
+                    ? 'bg-pink-500 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Female
+              </button>
+              <button
+                type="button"
+                onClick={() => setGender('other')}
+                className={`flex-1 py-2 px-4 rounded-xl font-semibold transition-all ${
+                  gender === 'other'
+                    ? 'bg-purple-500 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Other
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <button
+            onClick={handleSubmit}
+            className="flex-1 px-4 py-3 bg-moss text-white rounded-xl font-semibold hover:bg-moss/90 transition-all hover:scale-105 active:scale-95"
+          >
+            Add Person
+          </button>
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-all hover:scale-105 active:scale-95"
+          >
+            Cancel
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/**
  * Person Details Modal
  */
 function PersonModal({
@@ -119,6 +255,30 @@ function PersonModal({
           </div>
 
           <div className="flex items-center justify-between py-3 border-b border-gray-100">
+            <span className="text-gray-600 font-medium">Gender</span>
+            {isEditing ? (
+              <select
+                value={editedPerson.gender || 'other'}
+                onChange={(e) =>
+                  setEditedPerson({
+                    ...editedPerson,
+                    gender: e.target.value as 'male' | 'female' | 'other',
+                  })
+                }
+                className="text-gray-800 font-semibold border-b border-moss focus:outline-none bg-transparent"
+              >
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            ) : (
+              <span className="text-gray-800 font-semibold capitalize">
+                {person.gender || 'Not specified'}
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between py-3 border-b border-gray-100">
             <span className="text-gray-600 font-medium">Generation</span>
             <span className="text-gray-800 font-semibold">Generation {person.generation + 1}</span>
           </div>
@@ -197,44 +357,6 @@ function InteractivePersonCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Add Parents Button (top) - with more spacing */}
-      {onAddParents && isHovered && (
-        <motion.button
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute -top-12 left-1/2 -translate-x-1/2 w-8 h-8 bg-moss text-white rounded-full flex items-center justify-center shadow-lg hover:scale-125 transition-transform z-50"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddParents();
-          }}
-          title="Add Parents"
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-        </motion.button>
-      )}
-
-      {/* Add Spouse Button (right) - with more spacing */}
-      {onAddSpouse && isHovered && (
-        <motion.button
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="absolute -right-12 top-1/2 -translate-y-1/2 w-8 h-8 bg-moss text-white rounded-full flex items-center justify-center shadow-lg hover:scale-125 transition-transform z-50"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddSpouse();
-          }}
-          title="Add Spouse/Partner"
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-        </motion.button>
-      )}
-
       {/* Person Card */}
       <motion.div
         whileHover={{ scale: 1.05, y: -4 }}
@@ -287,8 +409,71 @@ function InteractivePersonCard({
           <p className="text-center text-xs text-gray-500 mt-2">b. {person.birthYear}</p>
         )}
       </motion.div>
+
+      {/* Overlay buttons ON TOP of cards */}
+      {isHovered && (
+        <>
+          {/* Add Parents Button (top) - overlaid on card edge */}
+          {onAddParents && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 bg-moss text-white rounded-full flex items-center justify-center shadow-lg hover:scale-125 transition-transform z-50"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddParents();
+              }}
+              title="Add Parents"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </motion.button>
+          )}
+
+          {/* Add Spouse Button (right) - overlaid on card edge */}
+          {onAddSpouse && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="absolute -right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-moss text-white rounded-full flex items-center justify-center shadow-lg hover:scale-125 transition-transform z-50"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddSpouse();
+              }}
+              title="Add Spouse/Partner"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </motion.button>
+          )}
+        </>
+      )}
     </div>
   );
+}
+
+/**
+ * Helper to get gender-aware role label
+ */
+function getRoleLabel(type: string, gender?: string): string {
+  if (type === 'parent') {
+    if (gender === 'male') return 'Father';
+    if (gender === 'female') return 'Mother';
+    return 'Parent';
+  }
+  if (type === 'sibling') {
+    if (gender === 'male') return 'Brother';
+    if (gender === 'female') return 'Sister';
+    return 'Sibling';
+  }
+  if (type === 'child') {
+    if (gender === 'male') return 'Son';
+    if (gender === 'female') return 'Daughter';
+    return 'Child';
+  }
+  return 'Spouse';
 }
 
 /**
@@ -307,6 +492,8 @@ export default function FamilyTreePage() {
   const [viewingTreeId, setViewingTreeId] = useState(appState.activeFamilyTreeId);
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [hoveredConnection, setHoveredConnection] = useState<string | null>(null);
+  const [addingPersonType, setAddingPersonType] = useState<'parents' | 'spouse' | 'child' | null>(null);
+  const [addingPersonContext, setAddingPersonContext] = useState<{ relativeTo?: Person; generation?: number } | null>(null);
 
   // Create ALL tree by combining all members
   const allTree = useMemo(() => {
@@ -371,66 +558,108 @@ export default function FamilyTreePage() {
     setAppState({ ...appState, trees: updatedTrees });
   };
 
-  // Handle adding BOTH parents
-  const handleAddParents = (relativeTo: Person) => {
-    const newMom: Person = {
-      id: `person-${Date.now()}-mom`,
-      name: 'New Mother',
-      role: 'Mother',
-      generation: relativeTo.generation - 1,
-      avatarColor: '#F4A5B9',
-      initials: 'NM',
-    };
-    const newDad: Person = {
-      id: `person-${Date.now()}-dad`,
-      name: 'New Father',
-      role: 'Father',
-      generation: relativeTo.generation - 1,
-      avatarColor: '#90B4CE',
-      initials: 'NF',
-    };
+  // Handle add person from modal
+  const handleAddPerson = (personData: Partial<Person>) => {
+    if (!addingPersonContext) return;
 
-    const updatedMembers = [...members, newMom, newDad];
+    const { relativeTo, generation } = addingPersonContext;
+
+    let newPeople: Person[] = [];
+
+    if (addingPersonType === 'parents' && relativeTo) {
+      // Add both parents
+      const initials = personData.name?.split(' ').map((n) => n[0]).join('') || 'NP';
+      const role = getRoleLabel('parent', personData.gender);
+
+      const parent: Person = {
+        id: `person-${Date.now()}`,
+        name: personData.name || 'New Parent',
+        role,
+        birthYear: personData.birthYear,
+        generation: relativeTo.generation - 1,
+        avatarColor: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+        initials,
+        gender: personData.gender,
+      };
+
+      newPeople = [parent];
+    } else if (addingPersonType === 'spouse' && relativeTo) {
+      const initials = personData.name?.split(' ').map((n) => n[0]).join('') || 'NS';
+
+      const spouse: Person = {
+        id: `person-${Date.now()}`,
+        name: personData.name || 'New Spouse',
+        role: 'Spouse',
+        birthYear: personData.birthYear,
+        generation: relativeTo.generation,
+        avatarColor: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+        initials,
+        gender: personData.gender,
+        spouseId: relativeTo.id,
+      };
+
+      // Update relativeTo to link to spouse
+      const updatedRelativeTo = { ...relativeTo, spouseId: spouse.id };
+      const updatedMembers = members.map((m) => (m.id === relativeTo.id ? updatedRelativeTo : m));
+
+      newPeople = [spouse];
+      const updatedTrees = appState.trees.map((tree) =>
+        tree.id === viewingTreeId ? { ...tree, members: [...updatedMembers, ...newPeople] } : tree
+      );
+      setAppState({ ...appState, trees: updatedTrees });
+      return;
+    } else if (addingPersonType === 'child' && generation !== undefined) {
+      const initials = personData.name?.split(' ').map((n) => n[0]).join('') || 'NC';
+      const role = getRoleLabel('child', personData.gender);
+
+      const child: Person = {
+        id: `person-${Date.now()}`,
+        name: personData.name || 'New Child',
+        role,
+        birthYear: personData.birthYear,
+        generation: generation + 1,
+        avatarColor: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+        initials,
+        gender: personData.gender,
+      };
+
+      newPeople = [child];
+    }
+
+    const updatedMembers = [...members, ...newPeople];
     const updatedTrees = appState.trees.map((tree) =>
       tree.id === viewingTreeId ? { ...tree, members: updatedMembers } : tree
     );
     setAppState({ ...appState, trees: updatedTrees });
   };
 
-  // Handle adding spouse
-  const handleAddSpouse = (relativeTo: Person) => {
-    const newPerson: Person = {
-      id: `person-${Date.now()}`,
-      name: 'New Spouse',
-      role: 'Spouse',
-      generation: relativeTo.generation,
-      avatarColor: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
-      initials: 'NS',
-    };
-
-    const updatedMembers = [...members, newPerson];
-    const updatedTrees = appState.trees.map((tree) =>
-      tree.id === viewingTreeId ? { ...tree, members: updatedMembers } : tree
-    );
-    setAppState({ ...appState, trees: updatedTrees });
+  // Open add person modal
+  const openAddPersonModal = (type: 'parents' | 'spouse' | 'child', context: typeof addingPersonContext) => {
+    setAddingPersonType(type);
+    setAddingPersonContext(context);
   };
 
-  // Handle adding child
-  const handleAddChild = (generation: number) => {
-    const newPerson: Person = {
-      id: `person-${Date.now()}`,
-      name: 'New Child',
-      role: 'Child',
-      generation: generation + 1,
-      avatarColor: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
-      initials: 'NC',
-    };
+  // Group people by couples for display
+  const groupByCouples = (people: Person[]): Person[][] => {
+    const couples: Person[][] = [];
+    const processed = new Set<string>();
 
-    const updatedMembers = [...members, newPerson];
-    const updatedTrees = appState.trees.map((tree) =>
-      tree.id === viewingTreeId ? { ...tree, members: updatedMembers } : tree
-    );
-    setAppState({ ...appState, trees: updatedTrees });
+    people.forEach((person) => {
+      if (processed.has(person.id)) return;
+
+      const spouse = person.spouseId ? people.find((p) => p.id === person.spouseId) : null;
+
+      if (spouse && !processed.has(spouse.id)) {
+        couples.push([person, spouse]);
+        processed.add(person.id);
+        processed.add(spouse.id);
+      } else if (!processed.has(person.id)) {
+        couples.push([person]);
+        processed.add(person.id);
+      }
+    });
+
+    return couples;
   };
 
   return (
@@ -518,38 +747,47 @@ export default function FamilyTreePage() {
           <div className="space-y-16 min-w-max relative">
             {generations.map((generation, idx) => {
               const people = generationGroups[generation];
+              const couples = groupByCouples(people);
               const colorScheme = GENERATION_COLORS[generation % GENERATION_COLORS.length];
               const connectionId = `gen-${generation}-to-${generation + 1}`;
 
               return (
                 <div key={generation} className="relative">
-                  {/* People in this generation */}
+                  {/* People in this generation - grouped by couples */}
                   <div className="flex justify-center items-center gap-12 flex-wrap">
-                    {people.map((person, personIdx) => (
-                      <div key={person.id} className="relative">
-                        <InteractivePersonCard
-                          person={person}
-                          generationColor={colorScheme}
-                          isMe={isMe(person)}
-                          onClick={() => setSelectedPerson(person)}
-                          onAddParents={
-                            idx === 0 || generation === 0
-                              ? () => handleAddParents(person)
-                              : undefined
-                          }
-                          onAddSpouse={() => handleAddSpouse(person)}
-                        />
+                    {couples.map((couple, coupleIdx) => (
+                      <div key={coupleIdx} className="flex items-center gap-6">
+                        {couple.map((person) => (
+                          <InteractivePersonCard
+                            key={person.id}
+                            person={person}
+                            generationColor={colorScheme}
+                            isMe={isMe(person)}
+                            onClick={() => setSelectedPerson(person)}
+                            onAddParents={
+                              idx === 0 || generation === 0
+                                ? () => openAddPersonModal('parents', { relativeTo: person })
+                                : undefined
+                            }
+                            onAddSpouse={
+                              !person.spouseId
+                                ? () => openAddPersonModal('spouse', { relativeTo: person })
+                                : undefined
+                            }
+                          />
+                        ))}
 
-                        {/* Horizontal line connecting spouses (same generation) */}
-                        {personIdx < people.length - 1 && (
+                        {/* Horizontal line connecting spouses */}
+                        {couple.length === 2 && (
                           <svg
-                            className="absolute top-1/2 left-full w-12 h-1 pointer-events-none"
-                            style={{ transform: 'translateY(-50%)' }}
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+                            width="60"
+                            height="2"
                           >
                             <line
                               x1="0"
                               y1="1"
-                              x2="48"
+                              x2="60"
                               y2="1"
                               stroke={colorScheme.border}
                               strokeWidth="2"
@@ -560,53 +798,95 @@ export default function FamilyTreePage() {
                     ))}
                   </div>
 
-                  {/* Connecting line to next generation with hover button */}
+                  {/* Connecting lines to next generation - proper genealogy style */}
                   {idx < generations.length - 1 && (
                     <div
-                      className="flex justify-center mt-10 relative"
+                      className="relative mt-8"
                       onMouseEnter={() => setHoveredConnection(connectionId)}
                       onMouseLeave={() => setHoveredConnection(null)}
                     >
-                      {/* Vertical connecting line */}
-                      <svg width="2" height="60" className="opacity-40">
+                      {/* Genealogy connecting lines */}
+                      <svg
+                        width="100%"
+                        height="80"
+                        className="absolute left-0 top-0 pointer-events-none"
+                        style={{ minWidth: '100%' }}
+                      >
+                        {/* Step 1: Vertical line down from parent generation */}
                         <line
-                          x1="1"
+                          x1="50%"
                           y1="0"
-                          x2="1"
-                          y2="60"
+                          x2="50%"
+                          y2="30"
                           stroke={colorScheme.border}
-                          strokeWidth="3"
-                          strokeDasharray="6 4"
+                          strokeWidth="2"
+                          className="opacity-50"
                         />
+
+                        {/* Step 2: Horizontal line spanning across (above children) */}
+                        <line
+                          x1="30%"
+                          y1="30"
+                          x2="70%"
+                          y2="30"
+                          stroke={colorScheme.border}
+                          strokeWidth="2"
+                          className="opacity-50"
+                        />
+
+                        {/* Step 3: Vertical lines down to children positions */}
+                        {generationGroups[generation + 1] && generationGroups[generation + 1].map((child, childIdx) => {
+                          const childCount = generationGroups[generation + 1].length;
+                          const startPercent = 30;
+                          const endPercent = 70;
+                          const spacing = (endPercent - startPercent) / (childCount > 1 ? childCount - 1 : 1);
+                          const xPercent = childCount === 1 ? 50 : startPercent + (childIdx * spacing);
+
+                          return (
+                            <line
+                              key={child.id}
+                              x1={`${xPercent}%`}
+                              y1="30"
+                              x2={`${xPercent}%`}
+                              y2="80"
+                              stroke={colorScheme.border}
+                              strokeWidth="2"
+                              className="opacity-50"
+                            />
+                          );
+                        })}
                       </svg>
 
-                      {/* Add Child Button - only shows on hover */}
-                      <AnimatePresence>
-                        {hoveredConnection === connectionId && (
-                          <motion.button
-                            initial={{ scale: 0, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0, opacity: 0 }}
-                            onClick={() => handleAddChild(generation)}
-                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-moss text-white rounded-full flex items-center justify-center shadow-lg hover:scale-125 transition-transform z-40"
-                            title="Add Child"
-                          >
-                            <svg
-                              className="w-6 h-6"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
+                      {/* Add Child Button - positioned on the horizontal line */}
+                      <div className="relative h-20 flex items-center justify-center">
+                        <AnimatePresence>
+                          {hoveredConnection === connectionId && (
+                            <motion.button
+                              initial={{ scale: 0, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              exit={{ scale: 0, opacity: 0 }}
+                              onClick={() => openAddPersonModal('child', { generation })}
+                              className="w-10 h-10 bg-moss text-white rounded-full flex items-center justify-center shadow-lg hover:scale-125 transition-transform z-40 pointer-events-auto"
+                              title="Add Child"
+                              style={{ marginTop: '-20px' }}
                             >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 4v16m8-8H4"
-                              />
-                            </svg>
-                          </motion.button>
-                        )}
-                      </AnimatePresence>
+                              <svg
+                                className="w-6 h-6"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 4v16m8-8H4"
+                                />
+                              </svg>
+                            </motion.button>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -672,6 +952,20 @@ export default function FamilyTreePage() {
             onClose={() => setSelectedPerson(null)}
             onSave={handlePersonUpdate}
             onDelete={() => handlePersonDelete(selectedPerson.id)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Add Person Modal */}
+      <AnimatePresence>
+        {addingPersonType && (
+          <AddPersonModal
+            type={addingPersonType}
+            onClose={() => {
+              setAddingPersonType(null);
+              setAddingPersonContext(null);
+            }}
+            onAdd={handleAddPerson}
           />
         )}
       </AnimatePresence>

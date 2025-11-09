@@ -19,6 +19,8 @@ export const initialTrees: FamilyTree[] = [
         generation: 0,
         avatarColor: '#C8B6A6',
         initials: 'AT',
+        gender: 'male',
+        spouseId: 'spouse',
       },
       {
         id: 'spouse',
@@ -28,6 +30,8 @@ export const initialTrees: FamilyTree[] = [
         generation: 0,
         avatarColor: '#A8C69F',
         initials: 'JL',
+        gender: 'female',
+        spouseId: 'me-main',
       },
       {
         id: 'child1',
@@ -37,6 +41,8 @@ export const initialTrees: FamilyTree[] = [
         generation: 1,
         avatarColor: '#E8C4D4',
         initials: 'S',
+        gender: 'female',
+        parentIds: ['me-main', 'spouse'],
       },
     ],
     activities: {
@@ -53,20 +59,24 @@ export const initialTrees: FamilyTree[] = [
       {
         id: 'dad',
         name: 'David Tan',
-        role: 'Dad',
+        role: 'Father',
         birthYear: 1972,
         generation: 0,
         avatarColor: '#A8C69F',
         initials: 'DT',
+        gender: 'male',
+        spouseId: 'mom',
       },
       {
         id: 'mom',
         name: 'Sarah Tan',
-        role: 'Mom',
+        role: 'Mother',
         birthYear: 1975,
         generation: 0,
         avatarColor: '#7A9B76',
         initials: 'ST',
+        gender: 'female',
+        spouseId: 'dad',
       },
       {
         id: 'me',
@@ -76,6 +86,8 @@ export const initialTrees: FamilyTree[] = [
         generation: 1,
         avatarColor: '#C8B6A6',
         initials: 'AT',
+        gender: 'male',
+        parentIds: ['dad', 'mom'],
       },
       {
         id: 'sibling1',
@@ -85,6 +97,8 @@ export const initialTrees: FamilyTree[] = [
         generation: 1,
         avatarColor: '#B8A99A',
         initials: 'ET',
+        gender: 'female',
+        parentIds: ['dad', 'mom'],
       },
     ],
     activities: {
@@ -106,6 +120,8 @@ export const initialTrees: FamilyTree[] = [
         generation: 0,
         avatarColor: '#E8DCC4',
         initials: 'WC',
+        gender: 'male',
+        spouseId: 'gm1',
       },
       {
         id: 'gm1',
@@ -115,6 +131,8 @@ export const initialTrees: FamilyTree[] = [
         generation: 0,
         avatarColor: '#D4A574',
         initials: 'ML',
+        gender: 'female',
+        spouseId: 'gf1',
       },
       {
         id: 'uncle1',
@@ -124,6 +142,9 @@ export const initialTrees: FamilyTree[] = [
         generation: 1,
         avatarColor: '#A8B6C6',
         initials: 'MT',
+        gender: 'male',
+        parentIds: ['gf1', 'gm1'],
+        spouseId: 'aunt1',
       },
       {
         id: 'aunt1',
@@ -133,6 +154,8 @@ export const initialTrees: FamilyTree[] = [
         generation: 1,
         avatarColor: '#C6A8B6',
         initials: 'LC',
+        gender: 'female',
+        spouseId: 'uncle1',
       },
       {
         id: 'cousin1',
@@ -142,6 +165,8 @@ export const initialTrees: FamilyTree[] = [
         generation: 2,
         avatarColor: '#B6C6A8',
         initials: 'RT',
+        gender: 'male',
+        parentIds: ['uncle1', 'aunt1'],
       },
       {
         id: 'cousin2',
@@ -151,6 +176,8 @@ export const initialTrees: FamilyTree[] = [
         generation: 2,
         avatarColor: '#C6B6A8',
         initials: 'OT',
+        gender: 'female',
+        parentIds: ['uncle1', 'aunt1'],
       },
     ],
     activities: {

@@ -16,9 +16,12 @@ export interface Person {
   name: string;
   role: string; // e.g., "Dad", "Sibling", "Grandfather"
   birthYear?: number;
-  generation: number; // 0 = oldest, 1 = parents, 2 = self, 3 = children
+  generation: number; // Calculated based on distance from root person
   avatarColor: string; // For placeholder avatars
   initials: string;
+  gender?: 'male' | 'female' | 'other'; // Gender for proper labels
+  parentIds?: string[]; // IDs of parents (max 2)
+  spouseId?: string; // ID of spouse/partner
 }
 
 export interface ActivityStats {
