@@ -477,26 +477,26 @@ function getRoleLabel(type: string, gender?: string): string {
 }
 
 /**
- * Single Tree Renderer Component
+ * Family Tree Page - Main Component
  */
-function SingleTreeRenderer({
-  treeName,
-  members,
-  treeIdForUpdates,
-  onPersonClick,
-  onPersonUpdate,
-  onPersonDelete,
-  onAddPerson,
-}: {
-  treeName: string;
-  members: Person[];
-  treeIdForUpdates: string;
-  onPersonClick: (person: Person) => void;
-  onPersonUpdate: (person: Person) => void;
-  onPersonDelete: (personId: string) => void;
-  onAddPerson: (type: 'parents' | 'spouse' | 'child', context: any) => void;
-}) {
+export default function FamilyTreePage() {
+  const [appState, setAppState] = useLocalStorageState<AppState>('roots-app-state', {
+    activeFamilyTreeId: initialTrees[0].id,
+    trees: initialTrees,
+    activitySuggestions,
+    memoryCollections: memoryCollectionsData,
+    lastExpandedMemory: {},
+  });
+
+  // Local state for viewing different trees on this page only
+  const [viewingTreeId, setViewingTreeId] = useState(appState.activeFamilyTreeId);
+  const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [hoveredConnection, setHoveredConnection] = useState<string | null>(null);
+  const [addingPersonType, setAddingPersonType] = useState<'parents' | 'spouse' | 'child' | null>(null);
+  const [addingPersonContext, setAddingPersonContext] = useState<{ relativeTo?: Person; generation?: number } | null>(null);
+
+  const viewingTree = appState.trees.find((t) => t.id === viewingTreeId);
+  const members = viewingTree?.members || [];
 
   // Group members by generation
   const generationGroups = useMemo(() => {
@@ -513,6 +513,10 @@ function SingleTreeRenderer({
   const generations = Object.keys(generationGroups)
     .map(Number)
     .sort((a, b) => a - b);
+
+  // Calculate total stats
+  const totalMembers = members.length;
+  const totalGenerations = generations.length;
 
   // Check if person is "Me"
   const isMe = (person: Person) => person.role.toLowerCase() === 'me';
@@ -540,248 +544,21 @@ function SingleTreeRenderer({
     return couples;
   };
 
-  return (
-    <div className="space-y-16 min-w-max relative">
-      {generations.map((generation, idx) => {
-        const people = generationGroups[generation];
-        const couples = groupByCouples(people);
-        const colorScheme = GENERATION_COLORS[generation % GENERATION_COLORS.length];
-        const connectionId = `${treeIdForUpdates}-gen-${generation}-to-${generation + 1}`;
-
-        // Get next generation's people for line drawing
-        const nextGenPeople = generationGroups[generation + 1] || [];
-        const nextGenCouples = groupByCouples(nextGenPeople);
-
-        return (
-          <div key={generation} className="relative">
-            {/* People in this generation - grouped by couples */}
-            <div className="flex justify-center items-center gap-12 flex-wrap">
-              {couples.map((couple, coupleIdx) => (
-                <div key={coupleIdx} className="relative flex items-center gap-6">
-                  {couple.map((person) => (
-                    <InteractivePersonCard
-                      key={person.id}
-                      person={person}
-                      generationColor={colorScheme}
-                      isMe={isMe(person)}
-                      onClick={() => onPersonClick(person)}
-                      onAddParents={
-                        idx === 0 || generation === Math.min(...generations)
-                          ? () => onAddPerson('parents', { relativeTo: person, treeId: treeIdForUpdates })
-                          : undefined
-                      }
-                      onAddSpouse={
-                        !person.spouseId
-                          ? () => onAddPerson('spouse', { relativeTo: person, treeId: treeIdForUpdates })
-                          : undefined
-                      }
-                    />
-                  ))}
-
-                  {/* Horizontal line connecting spouses */}
-                  {couple.length === 2 && (
-                    <svg
-                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-                      width="60"
-                      height="2"
-                    >
-                      <line
-                        x1="0"
-                        y1="1"
-                        x2="60"
-                        y2="1"
-                        stroke={colorScheme.border}
-                        strokeWidth="2"
-                      />
-                    </svg>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Connecting lines to next generation - proper genealogy style */}
-            {idx < generations.length - 1 && nextGenPeople.length > 0 && (
-              <div
-                className="relative mt-8"
-                onMouseEnter={() => setHoveredConnection(connectionId)}
-                onMouseLeave={() => setHoveredConnection(null)}
-              >
-                {/* Genealogy connecting lines */}
-                <svg
-                  width="100%"
-                  height="80"
-                  className="absolute left-0 top-0 pointer-events-none"
-                  style={{ minWidth: '100%' }}
-                >
-                  {/* Step 1: Vertical line down from parent generation center */}
-                  <line
-                    x1="50%"
-                    y1="0"
-                    x2="50%"
-                    y2="30"
-                    stroke={colorScheme.border}
-                    strokeWidth="2"
-                    className="opacity-50"
-                  />
-
-                  {/* Step 2: Horizontal line spanning across (above children) */}
-                  {nextGenPeople.length > 1 ? (
-                    <line
-                      x1="25%"
-                      y1="30"
-                      x2="75%"
-                      y2="30"
-                      stroke={colorScheme.border}
-                      strokeWidth="2"
-                      className="opacity-50"
-                    />
-                  ) : null}
-
-                  {/* Step 3: Vertical lines down to children positions */}
-                  {nextGenCouples.map((couple, coupleIdx) => {
-                    const totalCouples = nextGenCouples.length;
-                    let xPercent: number;
-
-                    if (totalCouples === 1) {
-                      xPercent = 50;
-                    } else {
-                      // Distribute couples evenly
-                      const startPercent = 25;
-                      const endPercent = 75;
-                      const spacing = (endPercent - startPercent) / (totalCouples - 1);
-                      xPercent = startPercent + coupleIdx * spacing;
-                    }
-
-                    return (
-                      <line
-                        key={coupleIdx}
-                        x1={`${xPercent}%`}
-                        y1="30"
-                        x2={`${xPercent}%`}
-                        y2="80"
-                        stroke={colorScheme.border}
-                        strokeWidth="2"
-                        className="opacity-50"
-                      />
-                    );
-                  })}
-                </svg>
-
-                {/* Add Child Button - positioned on the horizontal line */}
-                <div className="relative h-20 flex items-center justify-center">
-                  <AnimatePresence>
-                    {hoveredConnection === connectionId && (
-                      <motion.button
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0, opacity: 0 }}
-                        onClick={() => onAddPerson('child', { generation, treeId: treeIdForUpdates })}
-                        className="w-10 h-10 bg-moss text-white rounded-full flex items-center justify-center shadow-lg hover:scale-125 transition-transform z-40 pointer-events-auto"
-                        title="Add Child"
-                        style={{ marginTop: '-20px' }}
-                      >
-                        <svg
-                          className="w-6 h-6"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 4v16m8-8H4"
-                          />
-                        </svg>
-                      </motion.button>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-/**
- * Family Tree Page - Main Component
- */
-export default function FamilyTreePage() {
-  const [appState, setAppState] = useLocalStorageState<AppState>('roots-app-state', {
-    activeFamilyTreeId: initialTrees[0].id,
-    trees: initialTrees,
-    activitySuggestions,
-    memoryCollections: memoryCollectionsData,
-    lastExpandedMemory: {},
-  });
-
-  // Local state for viewing different trees on this page only
-  const [viewingTreeId, setViewingTreeId] = useState(appState.activeFamilyTreeId);
-  const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
-  const [addingPersonType, setAddingPersonType] = useState<'parents' | 'spouse' | 'child' | null>(null);
-  const [addingPersonContext, setAddingPersonContext] = useState<{ relativeTo?: Person; generation?: number; treeId?: string } | null>(null);
-
-  // Create ALL tree by combining all members
-  const allTree = useMemo(() => {
-    const allMembers = appState.trees.flatMap((tree) => tree.members);
-    // Remove duplicates by ID (in case same person appears in multiple trees)
-    const uniqueMembers = Array.from(
-      new Map(allMembers.map((m) => [m.id, m])).values()
-    );
-    return {
-      id: 'all',
-      name: 'All Family',
-      description: 'Everyone',
-      treeScore: Math.round(
-        appState.trees.reduce((sum, t) => sum + t.treeScore, 0) / appState.trees.length
-      ),
-      members: uniqueMembers,
-      activities: {
-        completed: appState.trees.reduce((sum, t) => sum + t.activities.completed, 0),
-        skipped: appState.trees.reduce((sum, t) => sum + t.activities.skipped, 0),
-      },
-    };
-  }, [appState.trees]);
-
-  const viewingTree =
-    viewingTreeId === 'all' ? allTree : appState.trees.find((t) => t.id === viewingTreeId);
-  const members = viewingTree?.members || [];
-
-  // Calculate total stats
-  const totalMembers = members.length;
-  const totalGenerations = useMemo(() => {
-    const gens = new Set(members.map((m) => m.generation));
-    return gens.size;
-  }, [members]);
-
-  // Check if person is "Me"
-  const isMe = (person: Person) => person.role.toLowerCase() === 'me';
-
-  // Handle person updates - need to update the CORRECT tree
+  // Handle person updates
   const handlePersonUpdate = (updated: Person) => {
-    // Find which tree(s) this person belongs to
-    const updatedTrees = appState.trees.map((tree) => {
-      const hasPerson = tree.members.some((m) => m.id === updated.id);
-      if (hasPerson) {
-        return {
-          ...tree,
-          members: tree.members.map((m) => (m.id === updated.id ? updated : m)),
-        };
-      }
-      return tree;
-    });
+    const updatedMembers = members.map((m) => (m.id === updated.id ? updated : m));
+    const updatedTrees = appState.trees.map((tree) =>
+      tree.id === viewingTreeId ? { ...tree, members: updatedMembers } : tree
+    );
     setAppState({ ...appState, trees: updatedTrees });
   };
 
   // Handle person deletion
   const handlePersonDelete = (personId: string) => {
-    const updatedTrees = appState.trees.map((tree) => ({
-      ...tree,
-      members: tree.members.filter((m) => m.id !== personId),
-    }));
+    const updatedMembers = members.filter((m) => m.id !== personId);
+    const updatedTrees = appState.trees.map((tree) =>
+      tree.id === viewingTreeId ? { ...tree, members: updatedMembers } : tree
+    );
     setAppState({ ...appState, trees: updatedTrees });
   };
 
@@ -789,24 +566,10 @@ export default function FamilyTreePage() {
   const handleAddPerson = (personData: Partial<Person>) => {
     if (!addingPersonContext) return;
 
-    const { relativeTo, generation, treeId } = addingPersonContext;
-
-    // Determine which tree to update
-    let targetTreeId = treeId || viewingTreeId;
-    if (targetTreeId === 'all') {
-      // If adding from "All Family" view, need to determine which tree
-      if (relativeTo) {
-        // Find which tree contains this person
-        const containingTree = appState.trees.find((t) =>
-          t.members.some((m) => m.id === relativeTo.id)
-        );
-        targetTreeId = containingTree?.id || appState.trees[0].id;
-      } else {
-        targetTreeId = appState.trees[0].id;
-      }
-    }
+    const { relativeTo, generation } = addingPersonContext;
 
     let newPeople: Person[] = [];
+    let updatedMembers = members;
 
     if (addingPersonType === 'parents' && relativeTo) {
       const initials = personData.name?.split(' ').map((n) => n[0]).join('') || 'NP';
@@ -832,30 +595,18 @@ export default function FamilyTreePage() {
         name: personData.name || 'New Spouse',
         role: 'Spouse',
         birthYear: personData.birthYear,
-        generation: relativeTo.generation,
+        generation: relativeTo.generation, // SAME generation as partner
         avatarColor: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
         initials,
         gender: personData.gender,
         spouseId: relativeTo.id,
       };
 
-      // Update relativeTo to link to spouse
+      // Update both people to link to each other
       const updatedRelativeTo = { ...relativeTo, spouseId: spouse.id };
+      updatedMembers = members.map((m) => (m.id === relativeTo.id ? updatedRelativeTo : m));
 
-      const updatedTrees = appState.trees.map((tree) => {
-        if (tree.id === targetTreeId) {
-          return {
-            ...tree,
-            members: [
-              ...tree.members.map((m) => (m.id === relativeTo.id ? updatedRelativeTo : m)),
-              spouse,
-            ],
-          };
-        }
-        return tree;
-      });
-      setAppState({ ...appState, trees: updatedTrees });
-      return;
+      newPeople = [spouse];
     } else if (addingPersonType === 'child' && generation !== undefined) {
       const initials = personData.name?.split(' ').map((n) => n[0]).join('') || 'NC';
       const role = getRoleLabel('child', personData.gender);
@@ -874,15 +625,10 @@ export default function FamilyTreePage() {
       newPeople = [child];
     }
 
-    const updatedTrees = appState.trees.map((tree) => {
-      if (tree.id === targetTreeId) {
-        return {
-          ...tree,
-          members: [...tree.members, ...newPeople],
-        };
-      }
-      return tree;
-    });
+    const finalMembers = [...updatedMembers, ...newPeople];
+    const updatedTrees = appState.trees.map((tree) =>
+      tree.id === viewingTreeId ? { ...tree, members: finalMembers } : tree
+    );
     setAppState({ ...appState, trees: updatedTrees });
   };
 
@@ -904,7 +650,7 @@ export default function FamilyTreePage() {
 
           {/* Tree View Selector */}
           <div className="flex justify-center gap-2 flex-wrap">
-            {[...appState.trees, allTree].map((tree) => (
+            {appState.trees.map((tree) => (
               <button
                 key={tree.id}
                 onClick={() => setViewingTreeId(tree.id)}
@@ -974,51 +720,168 @@ export default function FamilyTreePage() {
 
         {/* Family Tree Diagram */}
         <div className="bg-gradient-to-br from-cream/50 to-sand/50 rounded-3xl shadow-xl p-8 border border-gray-200 overflow-x-auto mb-8">
-          {viewingTreeId === 'all' ? (
-            /* ALL FAMILY VIEW - Display each tree separately */
-            <div className="space-y-16">
-              {appState.trees.map((tree, treeIdx) => (
-                <div key={tree.id} className="space-y-4">
-                  {/* Tree Label */}
-                  <div className="text-center">
-                    <h3 className="text-xl font-bold text-gray-700 mb-1">{tree.name}</h3>
-                    <div className="w-20 h-1 bg-moss/30 mx-auto rounded-full"></div>
+          <div className="space-y-16 min-w-max relative">
+            {generations.map((generation, idx) => {
+              const people = generationGroups[generation];
+              const couples = groupByCouples(people);
+              const colorScheme = GENERATION_COLORS[generation % GENERATION_COLORS.length];
+              const connectionId = `gen-${generation}-to-${generation + 1}`;
+
+              // Get next generation's people for line drawing
+              const nextGenPeople = generationGroups[generation + 1] || [];
+              const nextGenCouples = groupByCouples(nextGenPeople);
+
+              return (
+                <div key={generation} className="relative">
+                  {/* People in this generation - grouped by couples */}
+                  <div className="flex justify-center items-center gap-12 flex-wrap">
+                    {couples.map((couple, coupleIdx) => (
+                      <div key={coupleIdx} className="relative flex items-center gap-6">
+                        {couple.map((person) => (
+                          <InteractivePersonCard
+                            key={person.id}
+                            person={person}
+                            generationColor={colorScheme}
+                            isMe={isMe(person)}
+                            onClick={() => setSelectedPerson(person)}
+                            onAddParents={
+                              idx === 0 || generation === Math.min(...generations)
+                                ? () => openAddPersonModal('parents', { relativeTo: person })
+                                : undefined
+                            }
+                            onAddSpouse={
+                              !person.spouseId
+                                ? () => openAddPersonModal('spouse', { relativeTo: person })
+                                : undefined
+                            }
+                          />
+                        ))}
+
+                        {/* Horizontal line connecting spouses */}
+                        {couple.length === 2 && (
+                          <svg
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+                            width="60"
+                            height="2"
+                          >
+                            <line
+                              x1="0"
+                              y1="1"
+                              x2="60"
+                              y2="1"
+                              stroke={colorScheme.border}
+                              strokeWidth="2"
+                            />
+                          </svg>
+                        )}
+                      </div>
+                    ))}
                   </div>
 
-                  {/* Render this tree */}
-                  <SingleTreeRenderer
-                    treeName={tree.name}
-                    members={tree.members}
-                    treeIdForUpdates={tree.id}
-                    onPersonClick={setSelectedPerson}
-                    onPersonUpdate={handlePersonUpdate}
-                    onPersonDelete={handlePersonDelete}
-                    onAddPerson={openAddPersonModal}
-                  />
+                  {/* Connecting lines to next generation - proper genealogy style */}
+                  {idx < generations.length - 1 && nextGenPeople.length > 0 && (
+                    <div
+                      className="relative mt-8"
+                      onMouseEnter={() => setHoveredConnection(connectionId)}
+                      onMouseLeave={() => setHoveredConnection(null)}
+                    >
+                      {/* Genealogy connecting lines */}
+                      <svg
+                        width="100%"
+                        height="80"
+                        className="absolute left-0 top-0 pointer-events-none"
+                        style={{ minWidth: '100%' }}
+                      >
+                        {/* Step 1: Vertical line down from parent generation center */}
+                        <line
+                          x1="50%"
+                          y1="0"
+                          x2="50%"
+                          y2="30"
+                          stroke={colorScheme.border}
+                          strokeWidth="2"
+                          className="opacity-50"
+                        />
 
-                  {/* Separator between trees */}
-                  {treeIdx < appState.trees.length - 1 && (
-                    <div className="my-12 flex items-center justify-center">
-                      <div className="h-px bg-gray-300 flex-1"></div>
-                      <div className="px-4 text-gray-400 text-sm">◆</div>
-                      <div className="h-px bg-gray-300 flex-1"></div>
+                        {/* Step 2: Horizontal line spanning across (above children) */}
+                        {nextGenPeople.length > 1 ? (
+                          <line
+                            x1="25%"
+                            y1="30"
+                            x2="75%"
+                            y2="30"
+                            stroke={colorScheme.border}
+                            strokeWidth="2"
+                            className="opacity-50"
+                          />
+                        ) : null}
+
+                        {/* Step 3: Vertical lines down to children positions */}
+                        {nextGenCouples.map((couple, coupleIdx) => {
+                          const totalCouples = nextGenCouples.length;
+                          let xPercent: number;
+
+                          if (totalCouples === 1) {
+                            xPercent = 50;
+                          } else {
+                            // Distribute couples evenly
+                            const startPercent = 25;
+                            const endPercent = 75;
+                            const spacing = (endPercent - startPercent) / (totalCouples - 1);
+                            xPercent = startPercent + coupleIdx * spacing;
+                          }
+
+                          return (
+                            <line
+                              key={coupleIdx}
+                              x1={`${xPercent}%`}
+                              y1="30"
+                              x2={`${xPercent}%`}
+                              y2="80"
+                              stroke={colorScheme.border}
+                              strokeWidth="2"
+                              className="opacity-50"
+                            />
+                          );
+                        })}
+                      </svg>
+
+                      {/* Add Child Button - positioned on the horizontal line */}
+                      <div className="relative h-20 flex items-center justify-center">
+                        <AnimatePresence>
+                          {hoveredConnection === connectionId && (
+                            <motion.button
+                              initial={{ scale: 0, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              exit={{ scale: 0, opacity: 0 }}
+                              onClick={() => openAddPersonModal('child', { generation })}
+                              className="w-10 h-10 bg-moss text-white rounded-full flex items-center justify-center shadow-lg hover:scale-125 transition-transform z-40 pointer-events-auto"
+                              title="Add Child"
+                              style={{ marginTop: '-20px' }}
+                            >
+                              <svg
+                                className="w-6 h-6"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 4v16m8-8H4"
+                                />
+                              </svg>
+                            </motion.button>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </div>
                   )}
                 </div>
-              ))}
-            </div>
-          ) : (
-            /* SINGLE TREE VIEW */
-            <SingleTreeRenderer
-              treeName={viewingTree?.name || ''}
-              members={members}
-              treeIdForUpdates={viewingTreeId}
-              onPersonClick={setSelectedPerson}
-              onPersonUpdate={handlePersonUpdate}
-              onPersonDelete={handlePersonDelete}
-              onAddPerson={openAddPersonModal}
-            />
-          )}
+              );
+            })}
+          </div>
         </div>
 
         {/* Helper Info */}
@@ -1058,7 +921,7 @@ export default function FamilyTreePage() {
                 </li>
                 <li className="flex items-start">
                   <span className="text-moss mr-2">•</span>
-                  <span>Use tabs above to switch views - "All Family" shows each tree separately</span>
+                  <span>Use tabs above to switch between different family trees</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-moss mr-2">•</span>
