@@ -6,7 +6,7 @@ import { useLocalStorageState } from '@/hooks/useLocalStorageState';
 import { AppState } from '@/lib/types';
 import { initialTrees, activitySuggestions, memoryCollectionsData } from '@/lib/seedData';
 import { motion } from 'framer-motion';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 /**
  * Tree of Love page
@@ -25,6 +25,12 @@ export default function TreePage() {
     notifications: [],
   });
 
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const activeTree = appState.trees.find((t) => t.id === appState.activeFamilyTreeId);
   const treeScore = activeTree?.treeScore || 0;
   const memberCount = activeTree?.members.length || 0;
@@ -37,9 +43,20 @@ export default function TreePage() {
 
   const activitiesCompleted = activeTree?.activities.completed || 0;
 
+  // Calculate check-ins this week
+  const checkInsThisWeek = useMemo(() => {
+    if (!mounted) return 0;
+    const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    return (appState.checkIns || [])
+      .filter((c) => {
+        const timestamp = new Date(c.timestamp).getTime();
+        return timestamp > oneWeekAgo && c.treeId === appState.activeFamilyTreeId;
+      })
+      .length;
+  }, [appState.checkIns, appState.activeFamilyTreeId, mounted]);
+
   // Mock data for days active - in real app would be calculated from timestamps
   const daysActive = 14;
-  const checkInsThisWeek = 3;
 
   // Update tree score
   const updateScore = (delta: number) => {
@@ -91,7 +108,9 @@ export default function TreePage() {
           <div className="text-center mb-6">
             <div className="inline-block bg-gradient-to-r from-sage/30 to-moss/30 px-8 py-4 rounded-2xl shadow-md">
               <p className="text-sm text-gray-600 mb-1">Growth Level</p>
-              <p className="text-3xl font-bold text-moss">{treeScore}/100</p>
+              <p className="text-3xl font-bold text-moss" suppressHydrationWarning>
+                {mounted ? treeScore : 0}/100
+              </p>
             </div>
           </div>
 
@@ -173,7 +192,9 @@ export default function TreePage() {
                   />
                 </svg>
               </div>
-              <p className="text-2xl font-bold text-gray-800 mb-1">{memberCount}</p>
+              <p className="text-2xl font-bold text-gray-800 mb-1" suppressHydrationWarning>
+                {mounted ? memberCount : 0}
+              </p>
               <p className="text-xs text-gray-600 font-medium">Family Members</p>
             </div>
           </motion.div>
@@ -201,7 +222,9 @@ export default function TreePage() {
                   />
                 </svg>
               </div>
-              <p className="text-2xl font-bold text-gray-800 mb-1">{checkInsThisWeek}</p>
+              <p className="text-2xl font-bold text-gray-800 mb-1" suppressHydrationWarning>
+                {checkInsThisWeek}
+              </p>
               <p className="text-xs text-gray-600 font-medium">Check-ins This Week</p>
             </div>
           </motion.div>
@@ -229,7 +252,9 @@ export default function TreePage() {
                   />
                 </svg>
               </div>
-              <p className="text-2xl font-bold text-gray-800 mb-1">{memoriesShared}</p>
+              <p className="text-2xl font-bold text-gray-800 mb-1" suppressHydrationWarning>
+                {mounted ? memoriesShared : 0}
+              </p>
               <p className="text-xs text-gray-600 font-medium">Memories Shared</p>
             </div>
           </motion.div>
@@ -296,12 +321,14 @@ export default function TreePage() {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">This month</span>
-                <span className="font-semibold text-moss">{activitiesCompleted}</span>
+                <span className="font-semibold text-moss" suppressHydrationWarning>
+                  {mounted ? activitiesCompleted : 0}
+                </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className="h-full bg-gradient-to-r from-sage to-moss rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, (activitiesCompleted / 10) * 100)}%` }}
+                  style={{ width: `${Math.min(100, (mounted ? activitiesCompleted : 0) / 10 * 100)}%` }}
                 />
               </div>
             </div>
