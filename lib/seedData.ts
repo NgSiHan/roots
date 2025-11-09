@@ -1,4 +1,4 @@
-import { FamilyTree, Activity, MemoryCollection } from './types';
+import { FamilyTree, Activity, MemoryCollection, Album } from './types';
 
 /**
  * Seed data for ROOTS app
@@ -370,6 +370,164 @@ export const memoryCollectionsData: Record<string, MemoryCollection[]> = {
         { id: 'p16', url: '', caption: 'Summer BBQ 2024', color: '#F5D6A8' },
         { id: 'p17', url: '', caption: 'Grandma\'s birthday', color: '#E8C4F5' },
         { id: 'p18', url: '', caption: 'Cousins playdate', color: '#C4F5E8' },
+      ],
+    },
+  ],
+};
+
+// Helper function to generate placeholder photos
+function generatePhotos(baseId: string, count: number, prefix: string): any[] {
+  const colors = ['#E8C4D4', '#F5E6D3', '#E8D4C4', '#C8B6A6', '#A8C69F', '#B8D4E8', '#D4E8C4', '#E8D4F5', '#F5D6A8', '#C4F5E8'];
+  return Array.from({ length: count }, (_, i) => ({
+    id: `${baseId}-${i}`,
+    url: '',
+    caption: `${prefix} ${i + 1}`,
+    color: colors[i % colors.length],
+  }));
+}
+
+export const albumsData: Record<string, Album[]> = {
+  'my-family': [
+    {
+      id: 'summer-2024',
+      title: 'Summer Vacation 2024',
+      description: 'Our amazing summer trip to the beach',
+      coverColor: '#87CEEB',
+      lastUpdated: '2 days ago',
+      memories: [
+        {
+          id: 'beach-day',
+          title: 'Beach Day',
+          date: 'July 15, 2024',
+          photos: generatePhotos('beach', 13, 'Beach photo'),
+        },
+        {
+          id: 'theme-park',
+          title: 'Theme Park Adventure',
+          date: 'July 18, 2024',
+          photos: generatePhotos('theme', 18, 'Theme park'),
+        },
+        {
+          id: 'beach-sunset',
+          title: 'Sunset at the Beach',
+          date: 'July 20, 2024',
+          photos: generatePhotos('sunset', 8, 'Sunset'),
+        },
+      ],
+    },
+    {
+      id: 'sophie-firsts',
+      title: "Sophie's Firsts",
+      description: 'Milestone moments with our little one',
+      coverColor: '#FFB6C1',
+      lastUpdated: '1 week ago',
+      memories: [
+        {
+          id: 'first-steps',
+          title: 'First Steps',
+          date: 'March 10, 2023',
+          photos: generatePhotos('steps', 10, 'First steps'),
+        },
+        {
+          id: 'first-words',
+          title: 'First Words',
+          date: 'February 14, 2023',
+          photos: generatePhotos('words', 6, 'First words'),
+        },
+        {
+          id: 'first-birthday',
+          title: 'First Birthday Party',
+          date: 'January 1, 2023',
+          photos: generatePhotos('bday', 25, 'Birthday'),
+        },
+      ],
+    },
+    {
+      id: 'date-nights-2024',
+      title: 'Date Nights 2024',
+      description: 'Quality time together',
+      coverColor: '#DDA0DD',
+      lastUpdated: '3 days ago',
+      memories: [
+        {
+          id: 'anniversary',
+          title: 'Anniversary Dinner',
+          date: 'June 5, 2024',
+          photos: generatePhotos('anniversary', 12, 'Anniversary'),
+        },
+        {
+          id: 'movie-night',
+          title: 'Movie Night',
+          date: 'June 12, 2024',
+          photos: generatePhotos('movie', 5, 'Movie night'),
+        },
+      ],
+    },
+  ],
+  'parents-siblings': [
+    {
+      id: 'holidays-2024',
+      title: 'Holiday Celebrations 2024',
+      description: 'Special moments during the holidays',
+      coverColor: '#98FB98',
+      lastUpdated: '1 week ago',
+      memories: [
+        {
+          id: 'cny-2024',
+          title: 'Chinese New Year 2024',
+          date: 'February 10, 2024',
+          photos: generatePhotos('cny', 20, 'CNY'),
+        },
+        {
+          id: 'christmas-2023',
+          title: 'Christmas Dinner 2023',
+          date: 'December 25, 2023',
+          photos: generatePhotos('xmas', 15, 'Christmas'),
+        },
+      ],
+    },
+    {
+      id: 'game-nights',
+      title: 'Family Game Nights',
+      description: 'Fun times playing board games',
+      coverColor: '#FFD700',
+      lastUpdated: '4 days ago',
+      memories: [
+        {
+          id: 'monopoly-championship',
+          title: 'Monopoly Championship',
+          date: 'May 20, 2024',
+          photos: generatePhotos('monopoly', 8, 'Monopoly'),
+        },
+        {
+          id: 'poker-night',
+          title: 'Poker Night',
+          date: 'May 27, 2024',
+          photos: generatePhotos('poker', 10, 'Poker'),
+        },
+      ],
+    },
+  ],
+  'extended-family': [
+    {
+      id: 'reunions-2024',
+      title: 'Family Reunions 2024',
+      description: 'Getting together with the whole family',
+      coverColor: '#FFA07A',
+      lastUpdated: '2 weeks ago',
+      memories: [
+        {
+          id: 'summer-bbq',
+          title: 'Summer BBQ',
+          date: 'July 4, 2024',
+          photos: generatePhotos('bbq', 22, 'BBQ'),
+        },
+        {
+          id: 'grandma-bday',
+          title: "Grandma's 75th Birthday",
+          date: 'June 15, 2024',
+          photos: generatePhotos('gma-bday', 30, "Grandma's birthday"),
+        },
       ],
     },
   ],

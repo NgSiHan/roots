@@ -48,6 +48,30 @@ export interface CompletedActivity {
   participantIds: string[]; // Which family members participated
 }
 
+export interface Photo {
+  id: string;
+  url: string; // placeholder for now
+  caption: string;
+  color: string; // For placeholder colored boxes
+}
+
+export interface Memory {
+  id: string;
+  title: string; // e.g., "Beach Day", "Theme Park Visit"
+  date: string; // e.g., "July 15, 2024"
+  photos: Photo[];
+}
+
+export interface Album {
+  id: string;
+  title: string; // e.g., "Summer Vacation 2024"
+  description: string;
+  coverColor: string; // For album cover
+  lastUpdated: string; // e.g., "2 days ago"
+  memories: Memory[]; // Contains individual memories
+}
+
+// Legacy type - keeping for backward compatibility
 export interface MemoryCollection {
   id: string;
   title: string;
@@ -56,17 +80,12 @@ export interface MemoryCollection {
   photos: Photo[];
 }
 
-export interface Photo {
-  id: string;
-  url: string; // placeholder for now
-  caption: string;
-  color: string; // For placeholder colored boxes
-}
-
 export interface AppState {
   activeFamilyTreeId: string;
   trees: FamilyTree[];
   activitySuggestions: Activity[];
-  memoryCollections: Record<string, MemoryCollection[]>; // keyed by tree id
+  memoryCollections: Record<string, MemoryCollection[]>; // keyed by tree id - legacy
+  albums: Record<string, Album[]>; // keyed by tree id - new structure
   lastExpandedMemory: Record<string, string | null>; // keyed by tree id
+  lastExpandedAlbum: Record<string, string | null>; // keyed by tree id
 }

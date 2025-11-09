@@ -485,7 +485,9 @@ export default function FamilyTreePage() {
     trees: initialTrees,
     activitySuggestions,
     memoryCollections: memoryCollectionsData,
+    albums: {},
     lastExpandedMemory: {},
+    lastExpandedAlbum: {},
   });
 
   // Local state for viewing different trees on this page only

@@ -33,7 +33,9 @@ export default function ActivitiesPage() {
     trees: initialTrees,
     activitySuggestions,
     memoryCollections: memoryCollectionsData,
+    albums: {},
     lastExpandedMemory: {},
+    lastExpandedAlbum: {},
   });
 
   const activeTree = appState.trees.find((t) => t.id === appState.activeFamilyTreeId);

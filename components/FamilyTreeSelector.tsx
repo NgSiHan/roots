@@ -13,7 +13,9 @@ export default function FamilyTreeSelector() {
     trees: initialTrees,
     activitySuggestions: [],
     memoryCollections: {},
+    albums: {},
     lastExpandedMemory: {},
+    lastExpandedAlbum: {},
   });
 
   const activeTree = appState.trees.find((t) => t.id === appState.activeFamilyTreeId);
