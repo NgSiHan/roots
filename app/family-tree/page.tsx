@@ -9,10 +9,10 @@ import { useMemo, useState } from 'react';
 
 // Generation colors for visual distinction
 const GENERATION_COLORS = [
-  { bg: '#FEF3E2', border: '#F4D9A6', label: 'rgb(212, 165, 116)' }, // Warm beige
-  { bg: '#E8F5E9', border: '#A8C69F', label: 'rgb(122, 155, 118)' }, // Soft green
-  { bg: '#E3F2FD', border: '#90C4E8', label: 'rgb(66, 165, 245)' },  // Light blue
-  { bg: '#FCE4EC', border: '#F8BBD0', label: 'rgb(236, 64, 122)' },  // Soft pink
+  { bg: '#FEF3E2', border: '#F4D9A6', label: 'rgb(212, 165, 116)' },
+  { bg: '#E8F5E9', border: '#A8C69F', label: 'rgb(122, 155, 118)' },
+  { bg: '#E3F2FD', border: '#90C4E8', label: 'rgb(66, 165, 245)' },
+  { bg: '#FCE4EC', border: '#F8BBD0', label: 'rgb(236, 64, 122)' },
 ];
 
 /**
@@ -43,7 +43,7 @@ function PersonModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
       onClick={onClose}
     >
       <motion.div
@@ -177,51 +177,59 @@ function PersonModal({
 function InteractivePersonCard({
   person,
   generationColor,
+  isMe,
   onClick,
-  onAddParent,
-  onAddSibling,
+  onAddParents,
+  onAddSpouse,
 }: {
   person: Person;
   generationColor: typeof GENERATION_COLORS[0];
+  isMe: boolean;
   onClick: () => void;
-  onAddParent?: () => void;
-  onAddSibling?: () => void;
+  onAddParents?: () => void;
+  onAddSpouse?: () => void;
 }) {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <div className="relative">
-      {/* Add Parent Button (top) */}
-      {onAddParent && isHovered && (
+    <div
+      className="relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Add Parents Button (top) - with more spacing */}
+      {onAddParents && isHovered && (
         <motion.button
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute -top-8 left-1/2 -translate-x-1/2 w-6 h-6 bg-moss text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform z-10"
+          className="absolute -top-12 left-1/2 -translate-x-1/2 w-8 h-8 bg-moss text-white rounded-full flex items-center justify-center shadow-lg hover:scale-125 transition-transform z-50"
           onClick={(e) => {
             e.stopPropagation();
-            onAddParent();
+            onAddParents();
           }}
-          title="Add Parent"
+          title="Add Parents"
+          onMouseDown={(e) => e.stopPropagation()}
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
         </motion.button>
       )}
 
-      {/* Add Sibling Button (right) */}
-      {onAddSibling && isHovered && (
+      {/* Add Spouse Button (right) - with more spacing */}
+      {onAddSpouse && isHovered && (
         <motion.button
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
-          className="absolute -right-8 top-1/2 -translate-y-1/2 w-6 h-6 bg-moss text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform z-10"
+          className="absolute -right-12 top-1/2 -translate-y-1/2 w-8 h-8 bg-moss text-white rounded-full flex items-center justify-center shadow-lg hover:scale-125 transition-transform z-50"
           onClick={(e) => {
             e.stopPropagation();
-            onAddSibling();
+            onAddSpouse();
           }}
-          title="Add Sibling/Partner"
+          title="Add Spouse/Partner"
+          onMouseDown={(e) => e.stopPropagation()}
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
         </motion.button>
@@ -231,34 +239,44 @@ function InteractivePersonCard({
       <motion.div
         whileHover={{ scale: 1.05, y: -4 }}
         transition={{ duration: 0.2 }}
-        className="bg-white rounded-2xl p-4 shadow-md hover:shadow-xl transition-all cursor-pointer border-2 min-w-[140px]"
+        className={`bg-white rounded-2xl p-4 shadow-md hover:shadow-xl transition-all cursor-pointer border-2 min-w-[140px] ${
+          isMe ? 'ring-4 ring-moss ring-offset-2' : ''
+        }`}
         style={{
-          borderTopColor: generationColor.border,
-          backgroundColor: generationColor.bg,
+          borderTopColor: isMe ? '#7A9B76' : generationColor.border,
+          backgroundColor: isMe ? '#F0F8F0' : generationColor.bg,
         }}
         onClick={onClick}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
       >
         {/* Avatar circle */}
         <div
-          className="w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center text-white font-bold text-lg shadow-md"
+          className={`w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center text-white font-bold text-lg shadow-md ${
+            isMe ? 'ring-2 ring-moss' : ''
+          }`}
           style={{ backgroundColor: person.avatarColor }}
         >
           {person.initials}
         </div>
 
         {/* Name */}
-        <h3 className="text-center font-semibold text-gray-800 text-sm mb-1">{person.name}</h3>
+        <h3 className={`text-center font-semibold text-gray-800 text-sm mb-1 ${isMe ? 'text-moss font-bold' : ''}`}>
+          {person.name}
+        </h3>
 
         {/* Role badge */}
         <div className="text-center">
           <span
-            className="inline-block px-2 py-1 text-xs rounded-full font-medium"
-            style={{
-              backgroundColor: `${generationColor.border}40`,
-              color: generationColor.label,
-            }}
+            className={`inline-block px-2 py-1 text-xs rounded-full font-medium ${
+              isMe ? 'bg-moss text-white font-semibold' : ''
+            }`}
+            style={
+              !isMe
+                ? {
+                    backgroundColor: `${generationColor.border}40`,
+                    color: generationColor.label,
+                  }
+                : undefined
+            }
           >
             {person.role}
           </span>
@@ -288,8 +306,32 @@ export default function FamilyTreePage() {
   // Local state for viewing different trees on this page only
   const [viewingTreeId, setViewingTreeId] = useState(appState.activeFamilyTreeId);
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
+  const [hoveredConnection, setHoveredConnection] = useState<string | null>(null);
 
-  const viewingTree = appState.trees.find((t) => t.id === viewingTreeId);
+  // Create ALL tree by combining all members
+  const allTree = useMemo(() => {
+    const allMembers = appState.trees.flatMap((tree) => tree.members);
+    // Remove duplicates by ID (in case same person appears in multiple trees)
+    const uniqueMembers = Array.from(
+      new Map(allMembers.map((m) => [m.id, m])).values()
+    );
+    return {
+      id: 'all',
+      name: 'All Family',
+      description: 'Everyone',
+      treeScore: Math.round(
+        appState.trees.reduce((sum, t) => sum + t.treeScore, 0) / appState.trees.length
+      ),
+      members: uniqueMembers,
+      activities: {
+        completed: appState.trees.reduce((sum, t) => sum + t.activities.completed, 0),
+        skipped: appState.trees.reduce((sum, t) => sum + t.activities.skipped, 0),
+      },
+    };
+  }, [appState.trees]);
+
+  const viewingTree =
+    viewingTreeId === 'all' ? allTree : appState.trees.find((t) => t.id === viewingTreeId);
   const members = viewingTree?.members || [];
 
   // Group members by generation
@@ -308,11 +350,8 @@ export default function FamilyTreePage() {
     .map(Number)
     .sort((a, b) => a - b);
 
-  // Get generation label
-  const getGenerationLabel = (generation: number): string => {
-    const labels = ['Grandparents', 'Parents', 'Siblings', 'Children', 'Grandchildren'];
-    return labels[generation] || `Generation ${generation + 1}`;
-  };
+  // Check if person is "Me"
+  const isMe = (person: Person) => person.role.toLowerCase() === 'me';
 
   // Handle person updates
   const handlePersonUpdate = (updated: Person) => {
@@ -332,21 +371,59 @@ export default function FamilyTreePage() {
     setAppState({ ...appState, trees: updatedTrees });
   };
 
-  // Handle adding new person
-  const handleAddPerson = (type: 'parent' | 'sibling' | 'child', relativeTo?: Person) => {
+  // Handle adding BOTH parents
+  const handleAddParents = (relativeTo: Person) => {
+    const newMom: Person = {
+      id: `person-${Date.now()}-mom`,
+      name: 'New Mother',
+      role: 'Mother',
+      generation: relativeTo.generation - 1,
+      avatarColor: '#F4A5B9',
+      initials: 'NM',
+    };
+    const newDad: Person = {
+      id: `person-${Date.now()}-dad`,
+      name: 'New Father',
+      role: 'Father',
+      generation: relativeTo.generation - 1,
+      avatarColor: '#90B4CE',
+      initials: 'NF',
+    };
+
+    const updatedMembers = [...members, newMom, newDad];
+    const updatedTrees = appState.trees.map((tree) =>
+      tree.id === viewingTreeId ? { ...tree, members: updatedMembers } : tree
+    );
+    setAppState({ ...appState, trees: updatedTrees });
+  };
+
+  // Handle adding spouse
+  const handleAddSpouse = (relativeTo: Person) => {
     const newPerson: Person = {
       id: `person-${Date.now()}`,
-      name: type === 'parent' ? 'New Parent' : type === 'sibling' ? 'New Sibling' : 'New Child',
-      role: type.charAt(0).toUpperCase() + type.slice(1),
-      generation: relativeTo
-        ? type === 'parent'
-          ? relativeTo.generation - 1
-          : type === 'child'
-          ? relativeTo.generation + 1
-          : relativeTo.generation
-        : 0,
+      name: 'New Spouse',
+      role: 'Spouse',
+      generation: relativeTo.generation,
       avatarColor: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
-      initials: 'NP',
+      initials: 'NS',
+    };
+
+    const updatedMembers = [...members, newPerson];
+    const updatedTrees = appState.trees.map((tree) =>
+      tree.id === viewingTreeId ? { ...tree, members: updatedMembers } : tree
+    );
+    setAppState({ ...appState, trees: updatedTrees });
+  };
+
+  // Handle adding child
+  const handleAddChild = (generation: number) => {
+    const newPerson: Person = {
+      id: `person-${Date.now()}`,
+      name: 'New Child',
+      role: 'Child',
+      generation: generation + 1,
+      avatarColor: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+      initials: 'NC',
     };
 
     const updatedMembers = [...members, newPerson];
@@ -358,19 +435,17 @@ export default function FamilyTreePage() {
 
   return (
     <AnimatedPage>
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header with Tree Selector */}
         <div className="mb-8">
           <div className="text-center mb-4">
             <h1 className="text-3xl font-bold text-moss mb-2">Family Tree</h1>
-            <p className="text-gray-600 text-sm">
-              View and manage your family connections
-            </p>
+            <p className="text-gray-600 text-sm">View and manage your family connections</p>
           </div>
 
           {/* Tree View Selector */}
           <div className="flex justify-center gap-2 flex-wrap">
-            {appState.trees.map((tree) => (
+            {[...appState.trees, allTree].map((tree) => (
               <button
                 key={tree.id}
                 onClick={() => setViewingTreeId(tree.id)}
@@ -440,74 +515,98 @@ export default function FamilyTreePage() {
 
         {/* Family Tree Diagram */}
         <div className="bg-gradient-to-br from-cream/50 to-sand/50 rounded-3xl shadow-xl p-8 border border-gray-200 overflow-x-auto mb-8">
-          <div className="space-y-12 min-w-max">
+          <div className="space-y-16 min-w-max relative">
             {generations.map((generation, idx) => {
               const people = generationGroups[generation];
               const colorScheme = GENERATION_COLORS[generation % GENERATION_COLORS.length];
+              const connectionId = `gen-${generation}-to-${generation + 1}`;
 
               return (
                 <div key={generation} className="relative">
-                  {/* Generation label */}
-                  <div className="text-center mb-6">
-                    <span
-                      className="inline-block px-6 py-2 rounded-full shadow-sm text-sm font-semibold"
-                      style={{
-                        backgroundColor: colorScheme.bg,
-                        color: colorScheme.label,
-                        border: `2px solid ${colorScheme.border}`,
-                      }}
-                    >
-                      {getGenerationLabel(generation)}
-                    </span>
-                  </div>
-
                   {/* People in this generation */}
-                  <div className="flex justify-center items-center gap-8 flex-wrap">
-                    {people.map((person) => (
-                      <InteractivePersonCard
-                        key={person.id}
-                        person={person}
-                        generationColor={colorScheme}
-                        onClick={() => setSelectedPerson(person)}
-                        onAddParent={
-                          generation === 0
-                            ? () => handleAddPerson('parent', person)
-                            : undefined
-                        }
-                        onAddSibling={() => handleAddPerson('sibling', person)}
-                      />
+                  <div className="flex justify-center items-center gap-12 flex-wrap">
+                    {people.map((person, personIdx) => (
+                      <div key={person.id} className="relative">
+                        <InteractivePersonCard
+                          person={person}
+                          generationColor={colorScheme}
+                          isMe={isMe(person)}
+                          onClick={() => setSelectedPerson(person)}
+                          onAddParents={
+                            idx === 0 || generation === 0
+                              ? () => handleAddParents(person)
+                              : undefined
+                          }
+                          onAddSpouse={() => handleAddSpouse(person)}
+                        />
+
+                        {/* Horizontal line connecting spouses (same generation) */}
+                        {personIdx < people.length - 1 && (
+                          <svg
+                            className="absolute top-1/2 left-full w-12 h-1 pointer-events-none"
+                            style={{ transform: 'translateY(-50%)' }}
+                          >
+                            <line
+                              x1="0"
+                              y1="1"
+                              x2="48"
+                              y2="1"
+                              stroke={colorScheme.border}
+                              strokeWidth="2"
+                            />
+                          </svg>
+                        )}
+                      </div>
                     ))}
                   </div>
 
-                  {/* Connecting line to next generation */}
+                  {/* Connecting line to next generation with hover button */}
                   {idx < generations.length - 1 && (
-                    <div className="flex justify-center mt-8 relative">
-                      <svg width="2" height="50" className="opacity-30">
+                    <div
+                      className="flex justify-center mt-10 relative"
+                      onMouseEnter={() => setHoveredConnection(connectionId)}
+                      onMouseLeave={() => setHoveredConnection(null)}
+                    >
+                      {/* Vertical connecting line */}
+                      <svg width="2" height="60" className="opacity-40">
                         <line
                           x1="1"
                           y1="0"
                           x2="1"
-                          y2="50"
+                          y2="60"
                           stroke={colorScheme.border}
-                          strokeWidth="2"
-                          strokeDasharray="4 4"
+                          strokeWidth="3"
+                          strokeDasharray="6 4"
                         />
                       </svg>
-                      {/* Add Child Button */}
-                      <button
-                        onClick={() => handleAddPerson('child', people[0])}
-                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-moss text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
-                        title="Add Child"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 4v16m8-8H4"
-                          />
-                        </svg>
-                      </button>
+
+                      {/* Add Child Button - only shows on hover */}
+                      <AnimatePresence>
+                        {hoveredConnection === connectionId && (
+                          <motion.button
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0, opacity: 0 }}
+                            onClick={() => handleAddChild(generation)}
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-moss text-white rounded-full flex items-center justify-center shadow-lg hover:scale-125 transition-transform z-40"
+                            title="Add Child"
+                          >
+                            <svg
+                              className="w-6 h-6"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 4v16m8-8H4"
+                              />
+                            </svg>
+                          </motion.button>
+                        )}
+                      </AnimatePresence>
                     </div>
                   )}
                 </div>
@@ -520,7 +619,12 @@ export default function FamilyTreePage() {
         <div className="bg-gradient-to-br from-sand/40 to-terracotta/20 rounded-2xl p-6 shadow-md border border-gray-100">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
-              <svg className="w-5 h-5 text-terracotta" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-5 h-5 text-terracotta"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -538,15 +642,21 @@ export default function FamilyTreePage() {
                 </li>
                 <li className="flex items-start">
                   <span className="text-moss mr-2">•</span>
-                  <span>Hover over cards to see (+) buttons for adding family members</span>
+                  <span>
+                    Hover over cards to see add buttons: top for parents, side for spouse/partner
+                  </span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-moss mr-2">•</span>
-                  <span>Use the tabs above to switch between different family tree views</span>
+                  <span>Hover over connecting lines between generations to add children</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-moss mr-2">•</span>
-                  <span>All changes are automatically saved to your device</span>
+                  <span>Use tabs above to switch views - "All Family" shows everyone together</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-moss mr-2">•</span>
+                  <span>Cards with green rings are you (Me) - easy to spot!</span>
                 </li>
               </ul>
             </div>
