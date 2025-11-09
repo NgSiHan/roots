@@ -56,6 +56,8 @@ export const initialTrees: FamilyTree[] = [
     description: 'My parents and siblings',
     treeScore: 45,
     members: [
+      // David is a child of his parents (in Extended Family tree)
+      // He is at generation 0 in this tree (parent generation)
       {
         id: 'dad',
         name: 'David Tan',
@@ -65,8 +67,10 @@ export const initialTrees: FamilyTree[] = [
         avatarColor: '#A8C69F',
         initials: 'DT',
         gender: 'male',
-        spouseId: 'mom',
+        spouseId: 'mom', // Married to Sarah
       },
+      // Sarah married into the family (not a blood child of David's parents)
+      // She is at generation 0 (same as David - spouse level)
       {
         id: 'mom',
         name: 'Sarah Tan',
@@ -76,8 +80,10 @@ export const initialTrees: FamilyTree[] = [
         avatarColor: '#7A9B76',
         initials: 'ST',
         gender: 'female',
-        spouseId: 'dad',
+        spouseId: 'dad', // Married to David
+        // NO parentIds - she married into the family
       },
+      // Alex is a child of both David and Sarah
       {
         id: 'me',
         name: 'Alex Tan',
@@ -87,8 +93,9 @@ export const initialTrees: FamilyTree[] = [
         avatarColor: '#C8B6A6',
         initials: 'AT',
         gender: 'male',
-        parentIds: ['dad', 'mom'],
+        parentIds: ['dad', 'mom'], // Child of David and Sarah
       },
+      // Emma is a child of both David and Sarah
       {
         id: 'sibling1',
         name: 'Emma Tan',
@@ -98,7 +105,7 @@ export const initialTrees: FamilyTree[] = [
         avatarColor: '#B8A99A',
         initials: 'ET',
         gender: 'female',
-        parentIds: ['dad', 'mom'],
+        parentIds: ['dad', 'mom'], // Child of David and Sarah
       },
     ],
     activities: {
@@ -112,6 +119,7 @@ export const initialTrees: FamilyTree[] = [
     description: 'Grandparents, aunts, uncles & cousins',
     treeScore: 38,
     members: [
+      // Wei and Mei are the grandparents (generation 0)
       {
         id: 'gf1',
         name: 'Wei Chen',
@@ -121,7 +129,7 @@ export const initialTrees: FamilyTree[] = [
         avatarColor: '#E8DCC4',
         initials: 'WC',
         gender: 'male',
-        spouseId: 'gm1',
+        spouseId: 'gm1', // Married to Mei Ling
       },
       {
         id: 'gm1',
@@ -132,8 +140,9 @@ export const initialTrees: FamilyTree[] = [
         avatarColor: '#D4A574',
         initials: 'ML',
         gender: 'female',
-        spouseId: 'gf1',
+        spouseId: 'gf1', // Married to Wei Chen
       },
+      // Michael is a blood child of Wei and Mei (has parentIds)
       {
         id: 'uncle1',
         name: 'Michael Tan',
@@ -143,9 +152,11 @@ export const initialTrees: FamilyTree[] = [
         avatarColor: '#A8B6C6',
         initials: 'MT',
         gender: 'male',
-        parentIds: ['gf1', 'gm1'],
-        spouseId: 'aunt1',
+        parentIds: ['gf1', 'gm1'], // Child of Wei and Mei
+        spouseId: 'aunt1', // Married to Lisa
       },
+      // Lisa married into the family (NO parentIds - she's not Wei and Mei's child)
+      // She is at generation 1 (same as Michael - spouse level)
       {
         id: 'aunt1',
         name: 'Lisa Chen',
@@ -155,8 +166,10 @@ export const initialTrees: FamilyTree[] = [
         avatarColor: '#C6A8B6',
         initials: 'LC',
         gender: 'female',
-        spouseId: 'uncle1',
+        spouseId: 'uncle1', // Married to Michael
+        // NO parentIds - she married into the family
       },
+      // Ryan is a child of Michael and Lisa
       {
         id: 'cousin1',
         name: 'Ryan Tan',
@@ -166,8 +179,9 @@ export const initialTrees: FamilyTree[] = [
         avatarColor: '#B6C6A8',
         initials: 'RT',
         gender: 'male',
-        parentIds: ['uncle1', 'aunt1'],
+        parentIds: ['uncle1', 'aunt1'], // Child of Michael and Lisa
       },
+      // Olivia is a child of Michael and Lisa
       {
         id: 'cousin2',
         name: 'Olivia Tan',
@@ -177,7 +191,7 @@ export const initialTrees: FamilyTree[] = [
         avatarColor: '#C6B6A8',
         initials: 'OT',
         gender: 'female',
-        parentIds: ['uncle1', 'aunt1'],
+        parentIds: ['uncle1', 'aunt1'], // Child of Michael and Lisa
       },
     ],
     activities: {
