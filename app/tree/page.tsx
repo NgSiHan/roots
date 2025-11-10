@@ -127,8 +127,53 @@ export default function TreePage() {
     const updatedTrees = appState.trees.map((tree) =>
       tree.id === appState.activeFamilyTreeId ? { ...tree, treeScore: 0, logCount: 0 } : tree
     );
-    setAppState({ ...appState, trees: updatedTrees });
+    // Also clear all positive moments for this tree
+    const updatedMoments = appState.positiveMoments.filter(
+      (moment) => moment.treeId !== appState.activeFamilyTreeId
+    );
+    setAppState({ ...appState, trees: updatedTrees, positiveMoments: updatedMoments });
     setShowResetConfirm(false);
+  };
+
+  // Development helper: Jump to specific tree stage
+  const jumpToStage = (targetLogCount: number) => {
+    if (!activeTree) return;
+
+    // Clear existing logs for this tree
+    const updatedMoments = appState.positiveMoments.filter(
+      (moment) => moment.treeId !== appState.activeFamilyTreeId
+    );
+
+    // Create dummy logs to reach target
+    const dummyLogs: PositiveMoment[] = [];
+    for (let i = 0; i < targetLogCount; i++) {
+      dummyLogs.push({
+        id: `dev-moment-${Date.now()}-${i}`,
+        activityName: `Development Log ${i + 1}`,
+        participantIds: [activeTree.members[0]?.id || ''],
+        date: new Date().toISOString().split('T')[0],
+        emotionRating: 4,
+        notes: 'Development placeholder log',
+        photos: [],
+        pointsEarned: 3,
+        timestamp: new Date(Date.now() - (targetLogCount - i) * 1000).toISOString(),
+        treeId: appState.activeFamilyTreeId,
+      });
+    }
+
+    // Update tree and logs
+    const totalPoints = targetLogCount * 3;
+    const updatedTrees = appState.trees.map((tree) =>
+      tree.id === appState.activeFamilyTreeId
+        ? { ...tree, treeScore: totalPoints, logCount: targetLogCount }
+        : tree
+    );
+
+    setAppState({
+      ...appState,
+      trees: updatedTrees,
+      positiveMoments: [...dummyLogs, ...updatedMoments],
+    });
   };
 
   // Handle photo upload
@@ -326,6 +371,33 @@ export default function TreePage() {
             >
               Reset
             </button>
+          </div>
+
+          {/* Development Helper Buttons */}
+          <div className="border-t border-gray-200 pt-4 mt-6">
+            <p className="text-xs text-gray-500 text-center mb-3 font-semibold uppercase tracking-wide">
+              Development Tools
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                onClick={() => jumpToStage(10)}
+                className="px-4 py-2 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 transition-all hover:scale-105 active:scale-95"
+              >
+                → Sprout (10 logs)
+              </button>
+              <button
+                onClick={() => jumpToStage(20)}
+                className="px-4 py-2 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm font-medium hover:bg-green-100 transition-all hover:scale-105 active:scale-95"
+              >
+                → Young Tree (20 logs)
+              </button>
+              <button
+                onClick={() => jumpToStage(70)}
+                className="px-4 py-2 bg-purple-50 border border-purple-200 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-100 transition-all hover:scale-105 active:scale-95"
+              >
+                → Adult Tree (70 logs)
+              </button>
+            </div>
           </div>
         </div>
 
