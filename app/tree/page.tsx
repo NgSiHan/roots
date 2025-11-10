@@ -45,7 +45,18 @@ export default function TreePage() {
 
   const activeTree = appState.trees.find((t) => t.id === appState.activeFamilyTreeId);
   const treeScore = activeTree?.treeScore || 0;
+  const logCount = activeTree?.logCount || 0;
   const memberCount = activeTree?.members.length || 0;
+
+  // Calculate tree stage based on log count
+  const getTreeStage = (logs: number) => {
+    if (logs < 10) return { name: 'Seed', progress: logs, max: 10 };
+    if (logs < 20) return { name: 'Seedling', progress: logs - 10, max: 10 };
+    if (logs < 70) return { name: 'Sprout', progress: logs - 20, max: 50 };
+    return { name: 'Adult Tree', progress: logs - 70, max: null };
+  };
+
+  const treeStage = getTreeStage(logCount);
 
   // Calculate stats
   const memoriesShared = useMemo(() => {
@@ -129,11 +140,12 @@ export default function TreePage() {
   const calculatePoints = () => {
     let points = 1; // Base point for logging anything
 
-    if (activityName.trim()) points += 2; // +2 for description
+    if (activityName.trim()) points += 1; // +1 for description
+    if (notes.trim()) points += 2; // +2 for additional notes
     if (emotionRating !== undefined) points += 1;
     if (uploadedPhotos.length > 0) points += 1;
 
-    return Math.min(5, points); // Cap at 5 points
+    return Math.min(6, points); // Cap at 6 points (1+1+2+1+1)
   };
 
   // Toggle participant selection
@@ -165,10 +177,11 @@ export default function TreePage() {
       treeId: appState.activeFamilyTreeId,
     };
 
-    // Update tree score
-    const newScore = Math.min(100, treeScore + points);
+    // Update tree score and log count
+    const newScore = treeScore + points;
+    const newLogCount = (activeTree.logCount || 0) + 1;
     const updatedTrees = appState.trees.map((tree) =>
-      tree.id === appState.activeFamilyTreeId ? { ...tree, treeScore: newScore } : tree
+      tree.id === appState.activeFamilyTreeId ? { ...tree, treeScore: newScore, logCount: newLogCount } : tree
     );
 
     // Save moment and update score
@@ -190,12 +203,11 @@ export default function TreePage() {
   };
 
   // Get stage description
-  const getStageDescription = (score: number) => {
-    if (score <= 20) return 'Your relationship is just beginning to take root. Every small moment matters!';
-    if (score <= 40) return 'Growth is happening! Your connection is sprouting and showing promise.';
-    if (score <= 60) return 'Your relationship is branching out beautifully. Keep nurturing it!';
-    if (score <= 80) return 'Strong and mature! Your bond has grown deep and resilient.';
-    return 'Flourishing together! Your relationship is bearing beautiful fruits of love and connection.';
+  const getStageDescription = (stage: string) => {
+    if (stage === 'Seed') return 'Your relationship is just beginning to take root. Every log creates a new root!';
+    if (stage === 'Seedling') return 'Growth is happening! Your roots are spreading and a stem is forming.';
+    if (stage === 'Sprout') return 'Your relationship is branching out beautifully. Leaves are growing with each log!';
+    return 'Flourishing together! Your tree continues to grow with unlimited branches and leaves.';
   };
 
   return (
@@ -207,35 +219,51 @@ export default function TreePage() {
           <div className="text-center mb-6">
             <h1 className="text-3xl font-bold text-moss mb-2">Tree of Love</h1>
             <p className="text-gray-600 text-sm max-w-md mx-auto">
-              {getStageDescription(treeScore)}
+              {getStageDescription(treeStage.name)}
             </p>
           </div>
 
           {/* Tree visual */}
           <div className="mb-8">
-            <LoveTree score={treeScore} />
+            <LoveTree score={logCount} />
           </div>
 
-          {/* Score display */}
+          {/* Stage and Log Count display */}
           <div className="text-center mb-6">
             <div className="inline-block bg-gradient-to-r from-sage/30 to-moss/30 px-8 py-4 rounded-2xl shadow-md">
-              <p className="text-sm text-gray-600 mb-1">Growth Level</p>
+              <p className="text-sm text-gray-600 mb-1">{treeStage.name}</p>
               <p className="text-3xl font-bold text-moss" suppressHydrationWarning>
-                {mounted ? treeScore : 0}/100
+                {mounted ? logCount : 0} {logCount === 1 ? 'Log' : 'Logs'}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {treeScore} total points earned
               </p>
             </div>
           </div>
 
           {/* Progress bar */}
           <div className="mb-8 max-w-md mx-auto">
-            <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden shadow-inner">
-              <motion.div
-                className="h-full bg-gradient-to-r from-sage via-moss to-moss rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${treeScore}%` }}
-                transition={{ duration: 0.8, ease: 'easeOut' }}
-              />
-            </div>
+            {treeStage.max && (
+              <>
+                <div className="flex justify-between text-xs text-gray-600 mb-2">
+                  <span>Next stage: {treeStage.progress}/{treeStage.max}</span>
+                  <span>{treeStage.max - treeStage.progress} more logs</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden shadow-inner">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-sage via-moss to-moss rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(treeStage.progress / treeStage.max) * 100}%` }}
+                    transition={{ duration: 0.8, ease: 'easeOut' }}
+                  />
+                </div>
+              </>
+            )}
+            {!treeStage.max && (
+              <p className="text-center text-sm text-gray-600">
+                🌳 Your tree is fully grown! Keep logging to add more branches and leaves.
+              </p>
+            )}
           </div>
 
           {/* Controls */}
@@ -243,8 +271,7 @@ export default function TreePage() {
             {/* Main action button */}
             <button
               onClick={() => setShowModal(true)}
-              disabled={treeScore >= 100}
-              className="px-6 py-3 bg-gradient-to-r from-moss to-sage text-white rounded-xl font-semibold hover:shadow-lg disabled:bg-gray-300 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95 shadow-md"
+              className="px-6 py-3 bg-gradient-to-r from-moss to-sage text-white rounded-xl font-semibold hover:shadow-lg transition-all hover:scale-105 active:scale-95 shadow-md"
             >
               Log a Positive Moment
             </button>
@@ -493,7 +520,7 @@ export default function TreePage() {
                     <div>
                       <h2 className="text-2xl font-bold mb-1">Log a Positive Moment</h2>
                       <p className="text-sm text-white/90">
-                        Add details to earn up to 5 points!
+                        Add details to earn up to 6 points!
                       </p>
                     </div>
                     <button
@@ -526,7 +553,7 @@ export default function TreePage() {
                   {/* Description */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Description <span className="text-gray-400 font-normal">(Optional +2pt)</span>
+                      Description <span className="text-gray-400 font-normal">(Optional +1pt)</span>
                     </label>
                     <input
                       type="text"
@@ -646,7 +673,7 @@ export default function TreePage() {
                   {/* Notes */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Additional Notes <span className="text-gray-400 font-normal">(Optional)</span>
+                      Additional Notes <span className="text-gray-400 font-normal">(Optional +2pt)</span>
                     </label>
                     <textarea
                       value={notes}

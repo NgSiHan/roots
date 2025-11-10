@@ -6,7 +6,8 @@ export interface FamilyTree {
   id: string;
   name: string;
   description: string;
-  treeScore: number; // 0-100 for Tree of Love
+  treeScore: number; // Total points earned from all logs
+  logCount: number; // Number of logs (for tree growth stages)
   members: Person[];
   activities: ActivityStats;
   completedActivities?: CompletedActivity[]; // Track completed activities with timestamps
@@ -100,9 +101,10 @@ export interface PositiveMoment {
   emotionRating?: number; // 1-5
   notes?: string;
   photos: Photo[]; // Array of photos
-  pointsEarned: number; // 1-5 based on details provided
+  pointsEarned: number; // 1-6 based on details provided
   timestamp: string; // When it was logged
   treeId: string;
+  starred?: boolean; // If user favorited this log
 }
 
 export interface AppState {

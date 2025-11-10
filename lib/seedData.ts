@@ -10,6 +10,7 @@ export const initialTrees: FamilyTree[] = [
     name: 'My Family',
     description: 'Spouse & Children',
     treeScore: 72,
+    logCount: 0,
     members: [
       {
         id: 'me-main',
@@ -55,6 +56,7 @@ export const initialTrees: FamilyTree[] = [
     name: 'Parents & Siblings',
     description: 'My parents and siblings',
     treeScore: 45,
+    logCount: 0,
     members: [
       // David is a child of his parents (in Extended Family tree)
       // He is at generation 0 in this tree (parent generation)
@@ -118,6 +120,7 @@ export const initialTrees: FamilyTree[] = [
     name: 'Extended Family',
     description: 'Grandparents, aunts, uncles & cousins',
     treeScore: 38,
+    logCount: 0,
     members: [
       // Wei and Mei are the grandparents (generation 0)
       {
