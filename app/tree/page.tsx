@@ -225,7 +225,13 @@ export default function TreePage() {
 
           {/* Tree visual */}
           <div className="mb-8">
-            <LoveTree score={logCount} />
+            {mounted ? (
+              <LoveTree score={logCount} />
+            ) : (
+              <div className="h-[450px] flex items-center justify-center">
+                <div className="text-gray-400">Loading tree...</div>
+              </div>
+            )}
           </div>
 
           {/* Stage and Log Count display */}
