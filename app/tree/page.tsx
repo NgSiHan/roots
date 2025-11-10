@@ -409,6 +409,12 @@ export default function TreePage() {
               >
                 Adult Mid (100)
               </button>
+              <button
+                onClick={() => jumpToStage(110)}
+                className="px-3 py-2 bg-orange-50 border border-orange-200 text-orange-700 rounded-lg text-xs font-medium hover:bg-orange-100 transition-all hover:scale-105 active:scale-95"
+              >
+                Adult Max (110)
+              </button>
             </div>
           </div>
         </div>
