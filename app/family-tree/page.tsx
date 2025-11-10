@@ -729,7 +729,8 @@ export default function FamilyTreePage() {
             {generations.map((generation, idx) => {
               const people = generationGroups[generation];
               const couples = groupByCouples(people);
-              const colorScheme = GENERATION_COLORS[generation % GENERATION_COLORS.length];
+              const colorIndex = Math.abs(generation) % GENERATION_COLORS.length;
+              const colorScheme = GENERATION_COLORS[colorIndex] || GENERATION_COLORS[0];
               const connectionId = `gen-${generation}-to-${generation + 1}`;
 
               // Get next generation's people for line drawing
