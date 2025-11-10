@@ -36,6 +36,14 @@ export default function LogDetailModal({
     day: 'numeric',
   });
 
+  const formattedTimestamp = new Date(log.timestamp).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
   const emotionEmojis = ['😢', '😕', '😐', '😊', '🤩'];
 
   return (
@@ -97,6 +105,36 @@ export default function LogDetailModal({
 
           {/* Content */}
           <div className="overflow-y-auto flex-1 p-6 space-y-6">
+            {/* Quick Recap Summary */}
+            <div className="bg-gradient-to-r from-sage/10 to-moss/10 rounded-xl p-4 border-l-4 border-moss">
+              <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Activity Recap
+              </p>
+              <div className="space-y-1 text-sm text-gray-700">
+                <p>
+                  <span className="font-semibold">Activity:</span>{' '}
+                  {log.activityName || 'Positive Moment'}
+                </p>
+                <p>
+                  <span className="font-semibold">When:</span> {formattedDate}
+                </p>
+                <p>
+                  <span className="font-semibold">Who:</span>{' '}
+                  {participants.map((p) => p.name).join(', ') || 'No participants'}
+                  {log.additionalPeople && ` + ${log.additionalPeople}`}
+                </p>
+                <p>
+                  <span className="font-semibold">Photos:</span> {log.photos.length}
+                </p>
+                <p>
+                  <span className="font-semibold">Points Earned:</span> {log.pointsEarned} pts
+                </p>
+                <p className="text-xs text-gray-500 mt-2">
+                  Logged on {formattedTimestamp}
+                </p>
+              </div>
+            </div>
+
             {/* Date */}
             <div>
               <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Date</p>
