@@ -208,25 +208,23 @@ function SproutStage({ logCount }: { logCount: number }) {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.3 + i * 0.1 }}
           >
-            {/* Leaf with dark border */}
-            <ellipse
-              cx={x}
-              cy={stemY}
-              rx="11"
-              ry="18"
-              fill="#6B8E65"
-              stroke="#2D4A28"
-              strokeWidth="1.5"
-              transform={`rotate(${rotation} ${x} ${stemY})`}
-            />
-            <ellipse
-              cx={x}
-              cy={stemY}
-              rx="9"
-              ry="16"
-              fill="#A8C69F"
-              transform={`rotate(${rotation} ${x} ${stemY})`}
-            />
+            {/* Leaf shape with pointed tip and rounded base */}
+            <g transform={`translate(${x}, ${stemY}) rotate(${rotation})`}>
+              {/* Dark border leaf */}
+              <path
+                d="M 0,-9 Q 5,-6 6,0 Q 5,8 0,9 Q -5,8 -6,0 Q -5,-6 0,-9 Z"
+                fill="#6B8E65"
+                stroke="#2D4A28"
+                strokeWidth="1.5"
+              />
+              {/* Inner lighter leaf */}
+              <path
+                d="M 0,-7.5 Q 4,-5 5,0 Q 4,6.5 0,7.5 Q -4,6.5 -5,0 Q -4,-5 0,-7.5 Z"
+                fill="#A8C69F"
+              />
+              {/* Leaf vein */}
+              <line x1="0" y1="-7" x2="0" y2="7" stroke="#6B8E65" strokeWidth="0.5" opacity="0.5" />
+            </g>
           </motion.g>
         );
       })}
@@ -349,7 +347,8 @@ function YoungTreeStage({ logCount }: { logCount: number }) {
               const offset = isTopSide ? -6 : 6; // Increased offset to prevent overlap
               const y = baseY + offset;
 
-              const rotation = branchIdx % 2 === 0 ? -35 : 35;
+              // Bottom leaves tilt 35 degrees away from top leaves
+              const rotation = isTopSide ? -35 : 35;
 
               return (
                 <motion.g
@@ -358,25 +357,23 @@ function YoungTreeStage({ logCount }: { logCount: number }) {
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.3, delay: 0.5 + branchIdx * 0.1 + leafIdx * 0.05 }}
                 >
-                  {/* Leaf with dark border */}
-                  <ellipse
-                    cx={baseX}
-                    cy={y}
-                    rx="5"
-                    ry="9"
-                    fill="#6B8E65"
-                    stroke="#2D4A28"
-                    strokeWidth="1"
-                    transform={`rotate(${rotation} ${baseX} ${y})`}
-                  />
-                  <ellipse
-                    cx={baseX}
-                    cy={y}
-                    rx="4"
-                    ry="8"
-                    fill="#A8C69F"
-                    transform={`rotate(${rotation} ${baseX} ${y})`}
-                  />
+                  {/* Realistic leaf shape with pointed tip and rounded base */}
+                  <g transform={`translate(${baseX}, ${y}) rotate(${rotation})`}>
+                    {/* Dark border leaf */}
+                    <path
+                      d="M 0,-4.5 Q 2.5,-3 3,0 Q 2.5,4 0,4.5 Q -2.5,4 -3,0 Q -2.5,-3 0,-4.5 Z"
+                      fill="#6B8E65"
+                      stroke="#2D4A28"
+                      strokeWidth="0.8"
+                    />
+                    {/* Inner lighter leaf */}
+                    <path
+                      d="M 0,-3.5 Q 2,-2.5 2.5,0 Q 2,3.5 0,4 Q -2,3.5 -2.5,0 Q -2,-2.5 0,-3.5 Z"
+                      fill="#A8C69F"
+                    />
+                    {/* Leaf vein */}
+                    <line x1="0" y1="-3.5" x2="0" y2="4" stroke="#6B8E65" strokeWidth="0.3" opacity="0.5" />
+                  </g>
                 </motion.g>
               );
             })}
