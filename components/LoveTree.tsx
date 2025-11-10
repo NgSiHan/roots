@@ -613,35 +613,35 @@ function AdultTreeStage({
     const lengthVariation = (idx % 4) * 5; // 0, 5, 10, or 15 units variation
 
     if (isLeft) {
-      // Left branch - organic curve with slight upward then drooping motion
+      // Left branch - organic curve pointing upward
       const startX = centerX - 15;
       const control1X = centerX - 35 - widthGrowth * 0.3;
       const control1Y = trunkY - 20 + angleVariation;
       const control2X = centerX - 65 - widthGrowth * 0.7;
-      const control2Y = trunkY - 25 + angleVariation;
+      const control2Y = trunkY - 30 + angleVariation;
       const control3X = centerX - 85 - widthGrowth;
-      const control3Y = trunkY - 15 + angleVariation; // Slight droop
+      const control3Y = trunkY - 28 + angleVariation; // Upward curve
       const endX = centerX - baseExtension - widthGrowth - lengthVariation;
-      const endY = trunkY - 5 + angleVariation; // Droops down at the end
+      const endY = trunkY - 25 + angleVariation; // Points upward
 
       return {
-        path: `M ${startX} ${trunkY} C ${control1X} ${control1Y}, ${control2X} ${control2Y}, ${control3X} ${control3Y} S ${endX + 10} ${endY - 3}, ${endX} ${endY}`,
+        path: `M ${startX} ${trunkY} C ${control1X} ${control1Y}, ${control2X} ${control2Y}, ${control3X} ${control3Y} S ${endX + 10} ${endY - 2}, ${endX} ${endY}`,
         startX: control3X,
         startY: control3Y,
         endX: endX,
         endY: endY,
       };
     } else {
-      // Right branch - organic curve with slight upward then drooping motion
+      // Right branch - organic curve pointing upward
       const startX = centerX + 15;
       const control1X = centerX + 35 + widthGrowth * 0.3;
       const control1Y = trunkY - 20 + angleVariation;
       const control2X = centerX + 65 + widthGrowth * 0.7;
-      const control2Y = trunkY - 25 + angleVariation;
+      const control2Y = trunkY - 30 + angleVariation;
       const control3X = centerX + 85 + widthGrowth;
-      const control3Y = trunkY - 15 + angleVariation; // Slight droop
+      const control3Y = trunkY - 28 + angleVariation; // Upward curve
       const endX = centerX + baseExtension + widthGrowth + lengthVariation;
-      const endY = trunkY - 5 + angleVariation; // Droops down at the end
+      const endY = trunkY - 25 + angleVariation; // Points upward
 
       return {
         path: `M ${startX} ${trunkY} C ${control1X} ${control1Y}, ${control2X} ${control2Y}, ${control3X} ${control3Y} S ${endX - 10} ${endY - 3}, ${endX} ${endY}`,
@@ -816,24 +816,18 @@ function AdultTreeStage({
             {branch.branchLogs.slice(0, branch.leafCount).map((log, leafIdx) => {
               const isStarred = log?.starred;
 
-              // Distribute leaves more naturally with slight randomness
-              // Add variation based on leaf index for consistent but scattered appearance
-              const progressVariation = ((leafIdx * 7) % 11) / 100; // Small pseudo-random offset
-              const progress = (leafIdx + 0.5) / branch.branchCapacity + progressVariation;
+              // Distribute leaves evenly and orderly across the whole branch
+              const progress = (leafIdx + 0.5) / branch.branchCapacity;
               const baseX = branch.startX + (branch.endX - branch.startX) * progress;
               const baseY = branch.startY + (branch.endY - branch.startY) * progress;
 
-              // Alternate leaves above/below branch line with variation
+              // Alternate leaves above/below branch line
               const isTopSide = leafIdx % 2 === 0;
-              const offsetVariation = ((leafIdx * 13) % 7) - 3; // -3 to +3
-              const baseOffset = isTopSide ? -6 : 6;
-              const offset = baseOffset + offsetVariation;
+              const offset = isTopSide ? -6 : 6;
               const y = baseY + offset;
 
-              // Varied rotation for more natural look
-              const rotationVariation = ((leafIdx * 17) % 21) - 10; // -10 to +10 degrees
-              const baseRotation = isTopSide ? -35 : 35;
-              const rotation = baseRotation + rotationVariation;
+              // Consistent rotation for orderly appearance
+              const rotation = isTopSide ? -35 : 35;
 
               return (
                 <motion.g
