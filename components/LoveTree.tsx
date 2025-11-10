@@ -546,9 +546,20 @@ function AdultTreeStage({
 }) {
   // Adult tree shows branches displaying logs 10+
   // (Logs 0-9 are shown as roots)
-  // Calculate how many branches needed based on total log count
+  // After first 6 branches (60 logs), branches hold 20 leaves each
   const logsForBranches = Math.max(0, logCount - 10); // Logs after the 10 roots
-  const totalBranches = Math.ceil(logsForBranches / 10); // Unlimited branches
+
+  // Calculate total branches needed:
+  // - First 6 branches: 10 leaves each (logs 10-69)
+  // - After that: 20 leaves per branch
+  let totalBranches = 0;
+  if (logsForBranches <= 60) {
+    // Still in initial phase: 10 leaves per branch
+    totalBranches = Math.ceil(logsForBranches / 10);
+  } else {
+    // After first 60 logs: 6 initial branches + new 20-leaf branches
+    totalBranches = 6 + Math.ceil((logsForBranches - 60) / 20);
+  }
 
   // Dynamic height based on number of branches
   const baseHeight = 420;
@@ -556,18 +567,25 @@ function AdultTreeStage({
   const svgHeight = Math.max(baseHeight, baseHeight + (totalBranches - 6) * heightPerBranch);
   const viewBoxHeight = svgHeight;
 
-  // Keep all 10 roots from Seed stage
+  // Dynamic width - tree grows wider as it gets taller
+  const baseWidth = 340;
+  const widthPerBranch = 30; // Each branch pair adds 30 units of width
+  const svgWidth = Math.max(baseWidth, baseWidth + Math.floor(totalBranches / 2) * widthPerBranch);
+  const viewBoxWidth = svgWidth;
+  const centerX = viewBoxWidth / 2;
+
+  // Keep all 10 roots from Seed stage - dynamically centered
   const rootPaths = [
-    "M 170 310 L 170 340 L 160 360 L 140 380 L 120 395",
-    "M 170 310 L 170 340 L 160 360 L 150 385 L 138 400",
-    "M 170 310 L 170 340 L 165 365 L 158 385 L 150 400",
-    "M 170 310 L 170 340 L 168 365 L 162 388 L 158 405",
-    "M 170 310 L 170 340 L 170 370 L 165 392 L 165 410",
-    "M 170 310 L 170 340 L 172 365 L 178 388 L 182 405",
-    "M 170 310 L 170 340 L 175 365 L 182 385 L 190 400",
-    "M 170 310 L 170 340 L 180 360 L 190 385 L 202 400",
-    "M 170 310 L 170 340 L 180 360 L 200 380 L 220 395",
-    "M 170 310 L 170 340 L 170 370 L 175 392 L 182 410",
+    `M ${centerX} 310 L ${centerX} 340 L ${centerX - 10} 360 L ${centerX - 30} 380 L ${centerX - 50} 395`,
+    `M ${centerX} 310 L ${centerX} 340 L ${centerX - 10} 360 L ${centerX - 20} 385 L ${centerX - 32} 400`,
+    `M ${centerX} 310 L ${centerX} 340 L ${centerX - 5} 365 L ${centerX - 12} 385 L ${centerX - 20} 400`,
+    `M ${centerX} 310 L ${centerX} 340 L ${centerX - 2} 365 L ${centerX - 8} 388 L ${centerX - 12} 405`,
+    `M ${centerX} 310 L ${centerX} 340 L ${centerX} 370 L ${centerX - 5} 392 L ${centerX - 5} 410`,
+    `M ${centerX} 310 L ${centerX} 340 L ${centerX + 2} 365 L ${centerX + 8} 388 L ${centerX + 12} 405`,
+    `M ${centerX} 310 L ${centerX} 340 L ${centerX + 5} 365 L ${centerX + 12} 385 L ${centerX + 20} 400`,
+    `M ${centerX} 310 L ${centerX} 340 L ${centerX + 10} 360 L ${centerX + 20} 385 L ${centerX + 32} 400`,
+    `M ${centerX} 310 L ${centerX} 340 L ${centerX + 10} 360 L ${centerX + 30} 380 L ${centerX + 50} 395`,
+    `M ${centerX} 310 L ${centerX} 340 L ${centerX} 370 L ${centerX + 5} 392 L ${centerX + 12} 410`,
   ];
 
   // Generate branch configurations dynamically - unlimited growth
@@ -577,26 +595,36 @@ function AdultTreeStage({
     const pairIndex = Math.floor(idx / 2);
     const trunkY = 180 - pairIndex * 40;
 
+    // Branches grow wider as the tree gets taller
+    const baseExtension = 105; // Base distance from trunk
+    const widthGrowth = pairIndex * 15; // Each pair extends further out
+
     if (isLeft) {
       // Left branch
       const midY = trunkY - 15;
       const endY = trunkY - 25;
+      const startX = centerX - 15;
+      const midX = centerX - 40 - widthGrowth;
+      const endX = centerX - baseExtension - widthGrowth;
       return {
-        path: `M 165 ${trunkY} Q 140 ${midY} 115 ${endY} L 65 ${endY - 10}`,
-        startX: 115,
+        path: `M ${startX} ${trunkY} Q ${midX} ${midY} ${midX + 10} ${endY} L ${endX} ${endY - 10}`,
+        startX: midX + 10,
         startY: endY,
-        endX: 65,
+        endX: endX,
         endY: endY - 10,
       };
     } else {
       // Right branch
       const midY = trunkY - 15;
       const endY = trunkY - 25;
+      const startX = centerX + 15;
+      const midX = centerX + 40 + widthGrowth;
+      const endX = centerX + baseExtension + widthGrowth;
       return {
-        path: `M 175 ${trunkY} Q 200 ${midY} 225 ${endY} L 275 ${endY - 10}`,
-        startX: 225,
+        path: `M ${startX} ${trunkY} Q ${midX} ${midY} ${midX - 10} ${endY} L ${endX} ${endY - 10}`,
+        startX: midX - 10,
         startY: endY,
-        endX: 275,
+        endX: endX,
         endY: endY - 10,
       };
     }
@@ -604,24 +632,37 @@ function AdultTreeStage({
 
   const branches = Array.from({ length: totalBranches }).map((_, idx) => {
     const config = generateBranchConfig(idx);
-    const logStartIdx = 10 + idx * 10; // Start from log 10 (after roots)
+
+    // Calculate log start index based on branch type
+    // First 6 branches: 10 logs each (10, 20, 30, 40, 50, 60)
+    // After that: 20 logs each (70, 90, 110, 130, ...)
+    let logStartIdx = 10; // Start from log 10 (after roots)
+    if (idx < 6) {
+      logStartIdx = 10 + idx * 10;
+    } else {
+      logStartIdx = 70 + (idx - 6) * 20;
+    }
+
     const logsAvailableForBranch = Math.max(0, logCount - logStartIdx);
 
-    // Every even branch (0, 2, 4) has 10 leaves
-    // Every odd branch (1, 3, 5) has 9 leaves + 1 fruit (if there are at least 10 logs)
+    // Determine leaf capacity for this branch
+    const branchCapacity = idx < 6 ? 10 : 20;
+
+    // Every odd branch ends with a fruit (if it has enough logs)
     const isOddBranch = idx % 2 === 1;
     const branchLeafCount = isOddBranch
-      ? Math.min(Math.max(0, logsAvailableForBranch - 1), 9) // Save last log for fruit
-      : Math.min(logsAvailableForBranch, 10);
+      ? Math.min(Math.max(0, logsAvailableForBranch - 1), branchCapacity - 1) // Save last log for fruit
+      : Math.min(logsAvailableForBranch, branchCapacity);
 
-    const hasFruit = isOddBranch && logsAvailableForBranch >= 10;
+    const hasFruit = isOddBranch && logsAvailableForBranch >= branchCapacity;
 
     return {
       ...config,
       leafCount: branchLeafCount,
       active: branchLeafCount > 0 || hasFruit,
       hasFruit,
-      fruitLog: hasFruit ? logs[logStartIdx + 9] : undefined, // 10th log becomes fruit
+      fruitLog: hasFruit ? logs[logStartIdx + branchCapacity - 1] : undefined, // Last log becomes fruit
+      branchCapacity, // Store capacity for rendering
     };
   });
 
@@ -630,28 +671,31 @@ function AdultTreeStage({
   const trunkEndY = Math.max(10, highestBranchY);
 
   return (
-    <svg width="340" height={svgHeight} viewBox={`0 0 340 ${viewBoxHeight}`} className="drop-shadow-2xl">
+    <svg width={svgWidth} height={svgHeight} viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`} className="drop-shadow-2xl">
       {/* Ground with grass texture */}
       <motion.g
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <line x1="10" y1="310" x2="330" y2="310" stroke="#C8B6A6" strokeWidth="3" />
-        <ellipse cx="170" cy="320" rx="100" ry="50" fill="#D4A574" opacity="0.6" />
+        <line x1="10" y1="310" x2={viewBoxWidth - 10} y2="310" stroke="#C8B6A6" strokeWidth="3" />
+        <ellipse cx={centerX} cy="320" rx="100" ry="50" fill="#D4A574" opacity="0.6" />
         {/* Grass blades */}
-        {Array.from({ length: 15 }).map((_, i) => (
-          <line
-            key={i}
-            x1={70 + i * 15}
-            y1="310"
-            x2={72 + i * 15}
-            y2="300"
-            stroke="#A8C69F"
-            strokeWidth="2"
-            opacity="0.5"
-          />
-        ))}
+        {Array.from({ length: 15 }).map((_, i) => {
+          const grassX = (viewBoxWidth - 200) / 2 + 70 + i * 15;
+          return (
+            <line
+              key={i}
+              x1={grassX}
+              y1="310"
+              x2={grassX + 2}
+              y2="300"
+              stroke="#A8C69F"
+              strokeWidth="2"
+              opacity="0.5"
+            />
+          );
+        })}
       </motion.g>
 
       {/* All 10 roots - still visible and clickable */}
@@ -694,7 +738,7 @@ function AdultTreeStage({
 
       {/* Trunk - thicker for adult tree, extends dynamically based on branches */}
       <motion.path
-        d={`M 165 310 Q 164 260 165 210 Q 164 160 166 110 Q 167 ${(110 + trunkEndY) / 2} 168 ${trunkEndY}`}
+        d={`M ${centerX - 5} 310 Q ${centerX - 6} 260 ${centerX - 5} 210 Q ${centerX - 6} 160 ${centerX - 4} 110 Q ${centerX - 3} ${(110 + trunkEndY) / 2} ${centerX - 2} ${trunkEndY}`}
         stroke="#8B6F47"
         strokeWidth="12"
         fill="none"
@@ -706,7 +750,13 @@ function AdultTreeStage({
 
       {/* Branches with individual leaves - similar to Young Tree */}
       {branches.map((branch, branchIdx) => {
-        const branchStartLogIdx = 10 + branchIdx * 10; // Start from log 10 (after roots)
+        // Calculate log start index (same logic as above)
+        let branchStartLogIdx = 10;
+        if (branchIdx < 6) {
+          branchStartLogIdx = 10 + branchIdx * 10;
+        } else {
+          branchStartLogIdx = 70 + (branchIdx - 6) * 20;
+        }
 
         return branch.active && (
           <g key={branchIdx}>
@@ -727,8 +777,8 @@ function AdultTreeStage({
               const log = logs[branchStartLogIdx + leafIdx];
               const isStarred = log?.starred;
 
-              // Distribute leaves with proper spacing along branch
-              const progress = (leafIdx + 0.5) / 10;
+              // Distribute leaves with proper spacing along branch (use branchCapacity for proper distribution)
+              const progress = (leafIdx + 0.5) / branch.branchCapacity;
               const baseX = branch.startX + (branch.endX - branch.startX) * progress;
               const baseY = branch.startY + (branch.endY - branch.startY) * progress;
 

@@ -31,6 +31,7 @@ export default function TreePage() {
   const [showModal, setShowModal] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1); // Zoom level: 1 = 100%, 0.5 = 50%, 2 = 200%
 
   // Modal form state
   const [activityName, setActivityName] = useState('');
@@ -176,6 +177,27 @@ export default function TreePage() {
     });
   };
 
+  // Zoom handlers
+  const handleZoomIn = () => {
+    setZoom((prev) => Math.min(prev + 0.2, 3)); // Max 300%
+  };
+
+  const handleZoomOut = () => {
+    setZoom((prev) => Math.max(prev - 0.2, 0.3)); // Min 30%
+  };
+
+  const handleZoomReset = () => {
+    setZoom(1);
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.1 : 0.1;
+      setZoom((prev) => Math.max(0.3, Math.min(3, prev + delta)));
+    }
+  };
+
   // Handle photo upload
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -299,19 +321,62 @@ export default function TreePage() {
             </p>
           </div>
 
-          {/* Tree visual */}
-          <div className="mb-8">
-            {mounted ? (
-              <LoveTree
-                score={logCount}
-                logs={treeLogs}
-                onElementClick={(logId) => setSelectedLogId(logId)}
-              />
-            ) : (
-              <div className="h-[450px] flex items-center justify-center">
-                <div className="text-gray-400">Loading tree...</div>
+          {/* Tree visual with zoom controls */}
+          <div className="mb-8 relative">
+            {/* Zoom controls */}
+            <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 bg-white/90 backdrop-blur-sm rounded-xl p-2 shadow-lg">
+              <button
+                onClick={handleZoomIn}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                title="Zoom In (Ctrl + Scroll Up)"
+              >
+                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </button>
+              <button
+                onClick={handleZoomReset}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-xs font-semibold text-gray-600"
+                title="Reset Zoom"
+              >
+                {Math.round(zoom * 100)}%
+              </button>
+              <button
+                onClick={handleZoomOut}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                title="Zoom Out (Ctrl + Scroll Down)"
+              >
+                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Zoomable tree container */}
+            <div
+              className="overflow-auto max-h-[600px] rounded-xl bg-gradient-to-b from-sky-50 to-white p-4"
+              onWheel={handleWheel}
+            >
+              <div
+                style={{
+                  transform: `scale(${zoom})`,
+                  transformOrigin: 'top center',
+                  transition: 'transform 0.2s ease-out'
+                }}
+              >
+                {mounted ? (
+                  <LoveTree
+                    score={logCount}
+                    logs={treeLogs}
+                    onElementClick={(logId) => setSelectedLogId(logId)}
+                  />
+                ) : (
+                  <div className="h-[450px] flex items-center justify-center">
+                    <div className="text-gray-400">Loading tree...</div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Stage and Log Count display */}
