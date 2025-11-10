@@ -546,19 +546,27 @@ function AdultTreeStage({
 }) {
   // Adult tree shows branches displaying logs 10+
   // (Logs 0-9 are shown as roots)
-  // After first 6 branches (60 logs), branches hold 20 leaves each
+  // Growth pattern: branches grow from 10 to 20 leaves before creating new branches
+  // - Logs 10-69: Create 6 branches with 10 leaves each
+  // - Logs 70-129: Existing 6 branches grow to 20 leaves each
+  // - Logs 130-189: Create 6 more branches (12 total) with 10 leaves each
+  // - Logs 190-249: Those 6 branches grow to 20 leaves each
+  // Pattern: Every 120 logs adds 6 branches (first pass 10 leaves, second pass +10 more)
+
   const logsForBranches = Math.max(0, logCount - 10); // Logs after the 10 roots
 
-  // Calculate total branches needed:
-  // - First 6 branches: 10 leaves each (logs 10-69)
-  // - After that: 20 leaves per branch
-  let totalBranches = 0;
-  if (logsForBranches <= 60) {
-    // Still in initial phase: 10 leaves per branch
-    totalBranches = Math.ceil(logsForBranches / 10);
+  // Calculate total branches
+  // Each complete "set" of 120 logs creates 6 branches
+  const completedSets = Math.floor(logsForBranches / 120);
+  const remainderLogs = logsForBranches % 120;
+  let totalBranches = completedSets * 6;
+
+  if (remainderLogs > 60) {
+    // Second pass of current set - 6 branches being filled to 20 leaves
+    totalBranches += 6;
   } else {
-    // After first 60 logs: 6 initial branches + new 20-leaf branches
-    totalBranches = 6 + Math.ceil((logsForBranches - 60) / 20);
+    // First pass of current set - creating branches with 10 leaves each
+    totalBranches += Math.ceil(remainderLogs / 10);
   }
 
   // Dynamic height based on number of branches
@@ -648,39 +656,53 @@ function AdultTreeStage({
   const branches = Array.from({ length: totalBranches }).map((_, idx) => {
     const config = generateBranchConfig(idx);
 
-    // Calculate log start index based on branch type
-    // First 6 branches: 10 logs each (10, 20, 30, 40, 50, 60)
-    // After that: 20 logs each (70, 90, 110, 130, ...)
-    let logStartIdx = 10; // Start from log 10 (after roots)
-    if (idx < 6) {
-      logStartIdx = 10 + idx * 10;
-    } else {
-      logStartIdx = 70 + (idx - 6) * 20;
+    // Determine which set and position within set
+    const setIndex = Math.floor(idx / 6);
+    const branchInSet = idx % 6;
+
+    // Calculate log ranges for this branch
+    // First pass: 10 leaves at [setStart + branchOffset, setStart + branchOffset + 10)
+    // Second pass: 10 more leaves at [setStart + 60 + branchOffset, setStart + 60 + branchOffset + 10)
+    const setStart = 10 + setIndex * 120;
+    const branchOffset = branchInSet * 10;
+    const firstPassStart = setStart + branchOffset;
+    const secondPassStart = setStart + 60 + branchOffset;
+
+    // Collect logs for this branch
+    const branchLogs: PositiveMoment[] = [];
+
+    // Add first pass logs (first 10 leaves)
+    for (let i = firstPassStart; i < firstPassStart + 10 && i < logCount; i++) {
+      if (logs[i]) branchLogs.push(logs[i]);
     }
 
-    const logsAvailableForBranch = Math.max(0, logCount - logStartIdx);
+    // Add second pass logs (next 10 leaves) if we've reached that point
+    if (logCount > secondPassStart) {
+      for (let i = secondPassStart; i < secondPassStart + 10 && i < logCount; i++) {
+        if (logs[i]) branchLogs.push(logs[i]);
+      }
+    }
 
-    // Determine leaf capacity for this branch
-    const branchCapacity = idx < 6 ? 10 : 20;
+    const leafCount = branchLogs.length;
+    const branchCapacity = 20; // All branches can hold up to 20 leaves
 
     // Scatter fruit across both left and right branches
     // Pattern: skip every 3rd branch (idx % 3 !== 0)
-    // Since branches alternate left/right, this creates scattered fruit on both sides
-    // Result: branches 0, 1, 3, 4, 6, 7, 9, 10... get fruit (both L and R)
     const shouldHaveFruit = idx % 3 !== 0;
-    const branchLeafCount = shouldHaveFruit
-      ? Math.min(Math.max(0, logsAvailableForBranch - 1), branchCapacity - 1) // Save last log for fruit
-      : Math.min(logsAvailableForBranch, branchCapacity);
+    const hasFruit = shouldHaveFruit && leafCount >= branchCapacity;
 
-    const hasFruit = shouldHaveFruit && logsAvailableForBranch >= branchCapacity;
+    // If fruit, last log becomes fruit, rest are leaves
+    const actualLeafCount = hasFruit ? leafCount - 1 : leafCount;
+    const fruitLog = hasFruit ? branchLogs[branchLogs.length - 1] : undefined;
 
     return {
       ...config,
-      leafCount: branchLeafCount,
-      active: branchLeafCount > 0 || hasFruit,
+      leafCount: actualLeafCount,
+      active: leafCount > 0,
       hasFruit,
-      fruitLog: hasFruit ? logs[logStartIdx + branchCapacity - 1] : undefined, // Last log becomes fruit
-      branchCapacity, // Store capacity for rendering
+      fruitLog,
+      branchCapacity,
+      branchLogs, // Store all logs for this branch
     };
   });
 
@@ -776,14 +798,6 @@ function AdultTreeStage({
 
       {/* Branches with individual leaves - similar to Young Tree */}
       {branches.map((branch, branchIdx) => {
-        // Calculate log start index (same logic as above)
-        let branchStartLogIdx = 10;
-        if (branchIdx < 6) {
-          branchStartLogIdx = 10 + branchIdx * 10;
-        } else {
-          branchStartLogIdx = 70 + (branchIdx - 6) * 20;
-        }
-
         return branch.active && (
           <g key={branchIdx}>
             {/* Branch path */}
@@ -799,24 +813,31 @@ function AdultTreeStage({
             />
 
             {/* Individual leaves along the branch */}
-            {Array.from({ length: branch.leafCount }).map((_, leafIdx) => {
-              const log = logs[branchStartLogIdx + leafIdx];
+            {branch.branchLogs.slice(0, branch.leafCount).map((log, leafIdx) => {
               const isStarred = log?.starred;
 
-              // Distribute leaves with proper spacing along branch (use branchCapacity for proper distribution)
-              const progress = (leafIdx + 0.5) / branch.branchCapacity;
+              // Distribute leaves more naturally with slight randomness
+              // Add variation based on leaf index for consistent but scattered appearance
+              const progressVariation = ((leafIdx * 7) % 11) / 100; // Small pseudo-random offset
+              const progress = (leafIdx + 0.5) / branch.branchCapacity + progressVariation;
               const baseX = branch.startX + (branch.endX - branch.startX) * progress;
               const baseY = branch.startY + (branch.endY - branch.startY) * progress;
 
-              // Alternate leaves above/below branch line
+              // Alternate leaves above/below branch line with variation
               const isTopSide = leafIdx % 2 === 0;
-              const offset = isTopSide ? -6 : 6;
+              const offsetVariation = ((leafIdx * 13) % 7) - 3; // -3 to +3
+              const baseOffset = isTopSide ? -6 : 6;
+              const offset = baseOffset + offsetVariation;
               const y = baseY + offset;
-              const rotation = isTopSide ? -35 : 35;
+
+              // Varied rotation for more natural look
+              const rotationVariation = ((leafIdx * 17) % 21) - 10; // -10 to +10 degrees
+              const baseRotation = isTopSide ? -35 : 35;
+              const rotation = baseRotation + rotationVariation;
 
               return (
                 <motion.g
-                  key={leafIdx}
+                  key={log.id}
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.3, delay: 0.5 + branchIdx * 0.1 + leafIdx * 0.05 }}
