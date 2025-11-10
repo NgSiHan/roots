@@ -68,19 +68,19 @@ export default function LoveTree({ score }: LoveTreeProps) {
 function SeedStage({ logCount }: { logCount: number }) {
   const rootCount = Math.min(logCount, 10);
 
-  // 10 roots with realistic branching pattern
-  // Some grow directly from base, others branch from existing roots
+  // 10 roots with branching pattern - each root has its own distinct endpoint
+  // Structure: Base → main roots → branching roots → 10 distinct endpoints
   const rootPaths = [
-    { path: "M 150 200 L 150 240 L 140 260 L 130 280", desc: "Root 1 - left main" },
-    { path: "M 150 200 L 150 240 L 160 260 L 170 280", desc: "Root 2 - right main" },
-    { path: "M 140 260 L 120 275 L 110 290", desc: "Root 3 - branches from root 1" },
-    { path: "M 140 260 L 135 280 L 125 295", desc: "Root 4 - branches from root 1" },
-    { path: "M 160 260 L 180 275 L 190 290", desc: "Root 5 - branches from root 2" },
-    { path: "M 160 260 L 165 280 L 175 295", desc: "Root 6 - branches from root 2" },
-    { path: "M 110 290 L 95 300 L 85 310", desc: "Root 7 - branches from root 3" },
-    { path: "M 190 290 L 205 300 L 215 310", desc: "Root 8 - branches from root 5" },
-    { path: "M 150 240 L 150 265 L 145 285 L 140 300", desc: "Root 9 - center branch" },
-    { path: "M 145 285 L 150 295 L 155 305", desc: "Root 10 - branches from root 9" },
+    { path: "M 150 200 L 150 230 L 140 250 L 120 270 L 100 285", desc: "Root 1 - far left endpoint" },
+    { path: "M 150 200 L 150 230 L 140 250 L 130 275 L 118 290", desc: "Root 2 - left endpoint from main branch" },
+    { path: "M 150 200 L 150 230 L 145 255 L 138 275 L 130 290", desc: "Root 3 - center-left endpoint" },
+    { path: "M 150 200 L 150 230 L 148 255 L 142 278 L 138 295", desc: "Root 4 - left-center endpoint" },
+    { path: "M 150 200 L 150 230 L 150 260 L 145 282 L 145 300", desc: "Root 5 - center deep endpoint" },
+    { path: "M 150 200 L 150 230 L 152 255 L 158 278 L 162 295", desc: "Root 6 - right-center endpoint" },
+    { path: "M 150 200 L 150 230 L 155 255 L 162 275 L 170 290", desc: "Root 7 - center-right endpoint" },
+    { path: "M 150 200 L 150 230 L 160 250 L 170 275 L 182 290", desc: "Root 8 - right endpoint from main branch" },
+    { path: "M 150 200 L 150 230 L 160 250 L 180 270 L 200 285", desc: "Root 9 - far right endpoint" },
+    { path: "M 150 200 L 150 230 L 150 260 L 155 282 L 162 300", desc: "Root 10 - right deep endpoint" },
   ];
 
   return (
@@ -147,18 +147,18 @@ function SeedStage({ logCount }: { logCount: number }) {
 function SproutStage({ logCount }: { logCount: number }) {
   const leafCount = Math.min(logCount - 10, 10);
 
-  // Keep all 10 roots from Seed stage with branching pattern
+  // Keep all 10 roots from Seed stage - adjusted for Sprout ground level
   const rootPaths = [
-    "M 150 250 L 150 290 L 140 310 L 130 330",
-    "M 150 250 L 150 290 L 160 310 L 170 330",
-    "M 140 310 L 120 325 L 110 340",
-    "M 140 310 L 135 330 L 125 345",
-    "M 160 310 L 180 325 L 190 340",
-    "M 160 310 L 165 330 L 175 345",
-    "M 110 340 L 95 350 L 85 360",
-    "M 190 340 L 205 350 L 215 360",
-    "M 150 290 L 150 315 L 145 335 L 140 350",
-    "M 145 335 L 150 345 L 155 355",
+    "M 150 250 L 150 280 L 140 300 L 120 320 L 100 335",
+    "M 150 250 L 150 280 L 140 300 L 130 325 L 118 340",
+    "M 150 250 L 150 280 L 145 305 L 138 325 L 130 340",
+    "M 150 250 L 150 280 L 148 305 L 142 328 L 138 345",
+    "M 150 250 L 150 280 L 150 310 L 145 332 L 145 350",
+    "M 150 250 L 150 280 L 152 305 L 158 328 L 162 345",
+    "M 150 250 L 150 280 L 155 305 L 162 325 L 170 340",
+    "M 150 250 L 150 280 L 160 300 L 170 325 L 182 340",
+    "M 150 250 L 150 280 L 160 300 L 180 320 L 200 335",
+    "M 150 250 L 150 280 L 150 310 L 155 332 L 162 350",
   ];
 
   return (
@@ -194,12 +194,12 @@ function SproutStage({ logCount }: { logCount: number }) {
         transition={{ duration: 0.8 }}
       />
 
-      {/* Leaves alternating left/right with borders (10 total) */}
+      {/* Leaves alternating left/right with borders (10 total) - no overlap */}
       {Array.from({ length: leafCount }).map((_, i) => {
-        const stemY = 230 - i * 11; // Space leaves along stem
+        const stemY = 230 - i * 15; // Increased spacing to prevent overlap
         const isLeft = i % 2 === 0;
-        const x = isLeft ? 140 : 160;
-        const rotation = isLeft ? -30 : 30;
+        const x = isLeft ? 138 : 162; // Wider spacing from stem
+        const rotation = isLeft ? -35 : 35; // More rotation for better visibility
 
         return (
           <motion.g
@@ -212,8 +212,8 @@ function SproutStage({ logCount }: { logCount: number }) {
             <ellipse
               cx={x}
               cy={stemY}
-              rx="12"
-              ry="20"
+              rx="11"
+              ry="18"
               fill="#6B8E65"
               stroke="#2D4A28"
               strokeWidth="1.5"
@@ -222,8 +222,8 @@ function SproutStage({ logCount }: { logCount: number }) {
             <ellipse
               cx={x}
               cy={stemY}
-              rx="10"
-              ry="18"
+              rx="9"
+              ry="16"
               fill="#A8C69F"
               transform={`rotate(${rotation} ${x} ${stemY})`}
             />
@@ -240,18 +240,18 @@ function YoungTreeStage({ logCount }: { logCount: number }) {
   // Each additional log adds to subsequent branches
   const totalLeaves = Math.min(logCount - 20 + 10, 60); // +10 for Sprout transition
 
-  // Keep all 10 roots from Seed stage - still visible
+  // Keep all 10 roots from Seed stage - adjusted for Young Tree ground level
   const rootPaths = [
-    "M 150 280 L 150 320 L 140 340 L 130 360",
-    "M 150 280 L 150 320 L 160 340 L 170 360",
-    "M 140 340 L 120 355 L 110 370",
-    "M 140 340 L 135 360 L 125 375",
-    "M 160 340 L 180 355 L 190 370",
-    "M 160 340 L 165 360 L 175 375",
-    "M 110 370 L 95 380 L 85 390",
-    "M 190 370 L 205 380 L 215 390",
-    "M 150 320 L 150 345 L 145 365 L 140 380",
-    "M 145 365 L 150 375 L 155 385",
+    "M 150 280 L 150 310 L 140 330 L 120 350 L 100 365",
+    "M 150 280 L 150 310 L 140 330 L 130 355 L 118 370",
+    "M 150 280 L 150 310 L 145 335 L 138 355 L 130 370",
+    "M 150 280 L 150 310 L 148 335 L 142 358 L 138 375",
+    "M 150 280 L 150 310 L 150 340 L 145 362 L 145 380",
+    "M 150 280 L 150 310 L 152 335 L 158 358 L 162 375",
+    "M 150 280 L 150 310 L 155 335 L 162 355 L 170 370",
+    "M 150 280 L 150 310 L 160 330 L 170 355 L 182 370",
+    "M 150 280 L 150 310 L 160 330 L 180 350 L 200 365",
+    "M 150 280 L 150 310 L 150 340 L 155 362 L 162 380",
   ];
 
   // Calculate which branches are active and how many leaves each has
@@ -337,18 +337,19 @@ function YoungTreeStage({ logCount }: { logCount: number }) {
               transition={{ duration: 0.6, delay: 0.3 + branchIdx * 0.1 }}
             />
 
-            {/* Individual leaves along the branch alternating sides */}
+            {/* Individual leaves along the branch alternating sides - no overlap */}
             {Array.from({ length: branch.leafCount }).map((_, leafIdx) => {
-              const progress = (leafIdx + 1) / 10; // 0.1 to 1.0
+              // Distribute leaves with proper spacing along branch
+              const progress = (leafIdx + 0.5) / 10; // 0.05 to 0.95 for better distribution
               const baseX = branch.startX + (branch.endX - branch.startX) * progress;
               const baseY = branch.startY + (branch.endY - branch.startY) * progress;
 
-              // Alternate leaves slightly above/below branch line
+              // Alternate leaves above/below branch line with more offset
               const isTopSide = leafIdx % 2 === 0;
-              const offset = isTopSide ? -3 : 3;
+              const offset = isTopSide ? -6 : 6; // Increased offset to prevent overlap
               const y = baseY + offset;
 
-              const rotation = branchIdx % 2 === 0 ? -30 : 30;
+              const rotation = branchIdx % 2 === 0 ? -35 : 35;
 
               return (
                 <motion.g
@@ -361,8 +362,8 @@ function YoungTreeStage({ logCount }: { logCount: number }) {
                   <ellipse
                     cx={baseX}
                     cy={y}
-                    rx="6"
-                    ry="10"
+                    rx="5"
+                    ry="9"
                     fill="#6B8E65"
                     stroke="#2D4A28"
                     strokeWidth="1"
@@ -371,8 +372,8 @@ function YoungTreeStage({ logCount }: { logCount: number }) {
                   <ellipse
                     cx={baseX}
                     cy={y}
-                    rx="5"
-                    ry="9"
+                    rx="4"
+                    ry="8"
                     fill="#A8C69F"
                     transform={`rotate(${rotation} ${baseX} ${y})`}
                   />
