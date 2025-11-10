@@ -670,8 +670,16 @@ function AdultTreeStage({
   const highestBranchY = totalBranches > 0 ? 180 - Math.floor((totalBranches - 1) / 2) * 40 - 40 : 40;
   const trunkEndY = Math.max(10, highestBranchY);
 
+  // Adjust viewBox to properly frame the tree
+  // Add padding above the highest branch and below the roots
+  const topPadding = 30;
+  const bottomPadding = 20;
+  const minY = Math.min(trunkEndY - topPadding, 0);
+  const maxY = 410 + bottomPadding; // Ground is at 310, roots extend to ~410
+  const adjustedViewBoxHeight = maxY - minY;
+
   return (
-    <svg width={svgWidth} height={svgHeight} viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`} className="drop-shadow-2xl">
+    <svg width={svgWidth} height={svgHeight} viewBox={`0 ${minY} ${viewBoxWidth} ${adjustedViewBoxHeight}`} className="drop-shadow-2xl">
       {/* Ground with grass texture */}
       <motion.g
         initial={{ opacity: 0 }}
