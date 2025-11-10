@@ -816,10 +816,60 @@ function AdultTreeStage({
             {branch.branchLogs.slice(0, branch.leafCount).map((log, leafIdx) => {
               const isStarred = log?.starred;
 
-              // Distribute leaves with proper spacing along branch (same as Young Tree)
+              // Calculate position along the Bezier curve
               const progress = (leafIdx + 0.5) / branch.branchCapacity;
-              const baseX = branch.startX + (branch.endX - branch.startX) * progress;
-              const baseY = branch.startY + (branch.endY - branch.startY) * progress;
+              const isLeft = branchIdx % 2 === 0;
+
+              // Get branch curve parameters
+              const pairIndex = Math.floor(branchIdx / 2);
+              const trunkY = 180 - pairIndex * 40;
+              const widthGrowth = pairIndex * 15;
+              const angleVariation = (branchIdx % 3) * 3 - 3;
+              const lengthVariation = (branchIdx % 4) * 5;
+              const baseExtension = 105;
+
+              // Reconstruct control points
+              const startX = branch.startX;
+              const startY = branch.startY;
+              const control1X = isLeft ? centerX - 35 - widthGrowth * 0.3 : centerX + 35 + widthGrowth * 0.3;
+              const control1Y = trunkY - 20 + angleVariation;
+              const control2X = isLeft ? centerX - 65 - widthGrowth * 0.7 : centerX + 65 + widthGrowth * 0.7;
+              const control2Y = trunkY - 30 + angleVariation;
+              const control3X = isLeft ? centerX - 85 - widthGrowth : centerX + 85 + widthGrowth;
+              const control3Y = trunkY - 28 + angleVariation;
+
+              // Sample the Bezier curve at progress point
+              // Split into two curves: first cubic bezier (0-0.5) and smooth cubic bezier (0.5-1.0)
+              let baseX, baseY;
+              if (progress <= 0.5) {
+                // First cubic Bezier curve
+                const t = progress * 2; // Map to 0-1 range
+                const t2 = t * t;
+                const t3 = t2 * t;
+                const mt = 1 - t;
+                const mt2 = mt * mt;
+                const mt3 = mt2 * mt;
+
+                baseX = mt3 * startX + 3 * mt2 * t * control1X + 3 * mt * t2 * control2X + t3 * control3X;
+                baseY = mt3 * startY + 3 * mt2 * t * control1Y + 3 * mt * t2 * control2Y + t3 * control3Y;
+              } else {
+                // Smooth cubic Bezier curve (S command)
+                const t = (progress - 0.5) * 2; // Map to 0-1 range
+                const t2 = t * t;
+                const t3 = t2 * t;
+                const mt = 1 - t;
+                const mt2 = mt * mt;
+                const mt3 = mt2 * mt;
+
+                // S command's implicit first control point is reflection of previous control point
+                const smoothControl1X = 2 * control3X - control2X;
+                const smoothControl1Y = 2 * control3Y - control2Y;
+                const smoothControl2X = isLeft ? branch.endX + 10 : branch.endX - 10;
+                const smoothControl2Y = branch.endY - 2;
+
+                baseX = mt3 * control3X + 3 * mt2 * t * smoothControl1X + 3 * mt * t2 * smoothControl2X + t3 * branch.endX;
+                baseY = mt3 * control3Y + 3 * mt2 * t * smoothControl1Y + 3 * mt * t2 * smoothControl2Y + t3 * branch.endY;
+              }
 
               // Alternate leaves above/below branch line
               const isTopSide = leafIdx % 2 === 0;
