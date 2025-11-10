@@ -532,6 +532,7 @@ function YoungTreeStage({
 }
 
 // Stage 4: Adult tree with branch+leaf+fruit logic (70+ logs)
+// Displays logs 10-69 on 6 branches, with roots showing logs 0-9
 function AdultTreeStage({
   logCount,
   logs,
@@ -541,8 +542,9 @@ function AdultTreeStage({
   logs: PositiveMoment[];
   onElementClick: (logId: string) => void;
 }) {
-  // Calculate how many branches to show (each branch = 10 leaves) - max 6 branches
-  const totalBranches = Math.min(Math.floor((logCount - 70) / 10) + 1, 6);
+  // Adult tree shows 6 branches displaying logs 10-69
+  // (Logs 0-9 are shown as roots, logs 70+ continue growing the tree)
+  const totalBranches = 6;
 
   // Keep all 10 roots from Seed stage
   const rootPaths = [
@@ -569,8 +571,8 @@ function AdultTreeStage({
   ];
 
   const branches = branchConfigs.slice(0, totalBranches).map((config, idx) => {
-    const logStartIdx = 70 + idx * 10;
-    const logsAvailableForBranch = logCount - logStartIdx;
+    const logStartIdx = 10 + idx * 10; // Start from log 10 (after roots)
+    const logsAvailableForBranch = Math.max(0, Math.min(logCount, 70) - logStartIdx);
 
     // Every even branch (0, 2, 4) has 10 leaves
     // Every odd branch (1, 3, 5) has 9 leaves + 1 fruit (if there are at least 10 logs)
@@ -667,7 +669,7 @@ function AdultTreeStage({
 
       {/* Branches with individual leaves - similar to Young Tree */}
       {branches.map((branch, branchIdx) => {
-        const branchStartLogIdx = 70 + branchIdx * 10;
+        const branchStartLogIdx = 10 + branchIdx * 10; // Start from log 10 (after roots)
 
         return branch.active && (
           <g key={branchIdx}>
