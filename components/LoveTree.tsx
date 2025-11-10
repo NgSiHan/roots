@@ -40,18 +40,43 @@ export default function LoveTree({ score, logs, onElementClick, familyMembers = 
 
   // Mouse event handlers for tooltip
   const handleMouseEnter = (e: React.MouseEvent, log: PositiveMoment) => {
-    setTooltipPosition({
-      x: e.clientX,
-      y: e.clientY,
-    });
+    // Use clientX/clientY for viewport-relative positioning
+    // Keep tooltip close to cursor with small offset
+    const tooltipWidth = 220; // Approximate tooltip width
+    const tooltipHeight = 100; // Approximate tooltip height
+    const offset = 10;
+
+    let x = e.clientX + offset;
+    let y = e.clientY - offset;
+
+    // Keep tooltip within viewport bounds
+    if (x + tooltipWidth > window.innerWidth) {
+      x = e.clientX - tooltipWidth - offset;
+    }
+    if (y - tooltipHeight < 0) {
+      y = e.clientY + offset;
+    }
+
+    setTooltipPosition({ x, y });
     setHoveredLog(log);
   };
 
   const handleMouseMove = (e: React.MouseEvent, log: PositiveMoment) => {
-    setTooltipPosition({
-      x: e.clientX,
-      y: e.clientY,
-    });
+    const tooltipWidth = 220;
+    const tooltipHeight = 100;
+    const offset = 10;
+
+    let x = e.clientX + offset;
+    let y = e.clientY - offset;
+
+    if (x + tooltipWidth > window.innerWidth) {
+      x = e.clientX - tooltipWidth - offset;
+    }
+    if (y - tooltipHeight < 0) {
+      y = e.clientY + offset;
+    }
+
+    setTooltipPosition({ x, y });
   };
 
   const handleMouseLeave = () => {
@@ -101,8 +126,8 @@ export default function LoveTree({ score, logs, onElementClick, familyMembers = 
         <div
           className="fixed z-50 pointer-events-none"
           style={{
-            left: tooltipPosition.x + 10,
-            top: tooltipPosition.y - 10,
+            left: tooltipPosition.x,
+            top: tooltipPosition.y,
           }}
         >
           <motion.div
