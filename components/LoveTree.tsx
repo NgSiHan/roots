@@ -816,8 +816,8 @@ function AdultTreeStage({
             {branch.branchLogs.slice(0, branch.leafCount).map((log, leafIdx) => {
               const isStarred = log?.starred;
 
-              // Distribute leaves evenly and orderly across the whole branch
-              const progress = (leafIdx + 0.5) / branch.branchCapacity;
+              // Distribute leaves evenly across entire branch length from start to end
+              const progress = branch.leafCount > 1 ? leafIdx / (branch.leafCount - 1) : 0.5;
               const baseX = branch.startX + (branch.endX - branch.startX) * progress;
               const baseY = branch.startY + (branch.endY - branch.startY) * progress;
 
