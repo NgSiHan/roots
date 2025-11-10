@@ -626,8 +626,8 @@ function AdultTreeStage({
 
       return {
         path: `M ${startX} ${trunkY} C ${control1X} ${control1Y}, ${control2X} ${control2Y}, ${control3X} ${control3Y} S ${endX + 10} ${endY - 2}, ${endX} ${endY}`,
-        startX: control3X,
-        startY: control3Y,
+        startX: startX,  // Start from trunk connection
+        startY: trunkY,  // Start from trunk connection
         endX: endX,
         endY: endY,
       };
@@ -645,8 +645,8 @@ function AdultTreeStage({
 
       return {
         path: `M ${startX} ${trunkY} C ${control1X} ${control1Y}, ${control2X} ${control2Y}, ${control3X} ${control3Y} S ${endX - 10} ${endY - 3}, ${endX} ${endY}`,
-        startX: control3X,
-        startY: control3Y,
+        startX: startX,  // Start from trunk connection
+        startY: trunkY,  // Start from trunk connection
         endX: endX,
         endY: endY,
       };
