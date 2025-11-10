@@ -532,7 +532,7 @@ function YoungTreeStage({
 }
 
 // Stage 4: Adult tree with branch+leaf+fruit logic (70+ logs)
-// Displays logs 10-69 on 6 branches, with roots showing logs 0-9
+// Displays logs 10+ on dynamic branches (up to 10 branches), with roots showing logs 0-9
 function AdultTreeStage({
   logCount,
   logs,
@@ -542,9 +542,11 @@ function AdultTreeStage({
   logs: PositiveMoment[];
   onElementClick: (logId: string) => void;
 }) {
-  // Adult tree shows 6 branches displaying logs 10-69
-  // (Logs 0-9 are shown as roots, logs 70+ continue growing the tree)
-  const totalBranches = 6;
+  // Adult tree shows branches displaying logs 10+
+  // (Logs 0-9 are shown as roots)
+  // Calculate how many branches needed based on total log count
+  const logsForBranches = Math.max(0, logCount - 10); // Logs after the 10 roots
+  const totalBranches = Math.min(Math.ceil(logsForBranches / 10), 10); // Up to 10 branches max
 
   // Keep all 10 roots from Seed stage
   const rootPaths = [
@@ -560,7 +562,7 @@ function AdultTreeStage({
     "M 170 310 L 170 340 L 170 370 L 175 392 L 182 410",
   ];
 
-  // Define 6 branches - alternating left, right pattern
+  // Define up to 10 branches - alternating left, right pattern
   const branchConfigs = [
     { path: "M 165 180 Q 140 165 115 155 L 65 145", startX: 115, startY: 155, endX: 65, endY: 145 }, // Left 1
     { path: "M 175 180 Q 200 165 225 155 L 275 145", startX: 225, startY: 155, endX: 275, endY: 145 }, // Right 1
@@ -568,11 +570,15 @@ function AdultTreeStage({
     { path: "M 175 140 Q 200 125 225 115 L 265 105", startX: 225, startY: 115, endX: 265, endY: 105 }, // Right 2
     { path: "M 165 100 Q 140 85 115 75 L 85 65", startX: 115, startY: 75, endX: 85, endY: 65 }, // Left 3
     { path: "M 175 100 Q 200 85 225 75 L 255 65", startX: 225, startY: 75, endX: 255, endY: 65 }, // Right 3
+    { path: "M 165 70 Q 140 55 115 45 L 95 35", startX: 115, startY: 45, endX: 95, endY: 35 }, // Left 4
+    { path: "M 175 70 Q 200 55 225 45 L 245 35", startX: 225, startY: 45, endX: 245, endY: 35 }, // Right 4
+    { path: "M 168 50 Q 165 35 165 25 L 165 10", startX: 165, startY: 25, endX: 165, endY: 10 }, // Top Left 5
+    { path: "M 172 50 Q 175 35 175 25 L 175 10", startX: 175, startY: 25, endX: 175, endY: 10 }, // Top Right 5
   ];
 
   const branches = branchConfigs.slice(0, totalBranches).map((config, idx) => {
     const logStartIdx = 10 + idx * 10; // Start from log 10 (after roots)
-    const logsAvailableForBranch = Math.max(0, Math.min(logCount, 70) - logStartIdx);
+    const logsAvailableForBranch = Math.max(0, logCount - logStartIdx);
 
     // Every even branch (0, 2, 4) has 10 leaves
     // Every odd branch (1, 3, 5) has 9 leaves + 1 fruit (if there are at least 10 logs)
