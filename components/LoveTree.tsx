@@ -317,7 +317,7 @@ function SproutStage({
   );
 }
 
-// Stage 3: Young Tree with 5 branches × 10 individual leaves each (20-69 logs)
+// Stage 3: Young Tree with 6 branches × 10 individual leaves each (20-69 logs)
 function YoungTreeStage({
   logCount,
   logs,
@@ -376,6 +376,12 @@ function YoungTreeStage({
       leafCount: Math.min(Math.max(0, totalLeaves - 40), 10),
       path: "M 145 70 Q 130 60 115 55 L 95 45",
       startX: 115, startY: 55, endX: 95, endY: 45,
+    },
+    {
+      active: totalLeaves > 50,
+      leafCount: Math.min(Math.max(0, totalLeaves - 50), 10),
+      path: "M 147 70 Q 160 60 175 55 L 195 45",
+      startX: 175, startY: 55, endX: 195, endY: 45,
     },
   ];
 
