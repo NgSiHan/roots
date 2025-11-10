@@ -8,6 +8,7 @@ import { AppState, PositiveMoment, Photo } from '@/lib/types';
 import { initialTrees, activitySuggestions, memoryCollectionsData } from '@/lib/seedData';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMemo, useState, useEffect } from 'react';
+import Link from 'next/link';
 
 /**
  * Tree of Love page
@@ -315,7 +316,17 @@ export default function TreePage() {
         <div className="bg-gradient-to-br from-white/70 to-sage/10 backdrop-blur-sm rounded-3xl shadow-xl p-8 border border-gray-200 mb-6">
           {/* Header */}
           <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold text-moss mb-2">Tree of Love</h1>
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <h1 className="text-3xl font-bold text-moss">Tree of Love</h1>
+              <Link
+                href="/starred"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-full text-sm font-medium transition-colors"
+                title="View starred moments"
+              >
+                <span>⭐</span>
+                <span>Starred</span>
+              </Link>
+            </div>
             <p className="text-gray-600 text-sm max-w-md mx-auto" suppressHydrationWarning>
               {mounted ? getStageDescription(treeStage.name) : 'Track your positive moments and watch your tree grow!'}
             </p>

@@ -40,12 +40,18 @@ export default function LoveTree({ score, logs, onElementClick, familyMembers = 
 
   // Mouse event handlers for tooltip
   const handleMouseEnter = (e: React.MouseEvent, log: PositiveMoment) => {
-    const rect = e.currentTarget.getBoundingClientRect();
     setTooltipPosition({
-      x: rect.left + rect.width / 2,
-      y: rect.top - 10,
+      x: e.clientX,
+      y: e.clientY,
     });
     setHoveredLog(log);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent, log: PositiveMoment) => {
+    setTooltipPosition({
+      x: e.clientX,
+      y: e.clientY,
+    });
   };
 
   const handleMouseLeave = () => {
@@ -95,9 +101,8 @@ export default function LoveTree({ score, logs, onElementClick, familyMembers = 
         <div
           className="fixed z-50 pointer-events-none"
           style={{
-            left: tooltipPosition.x,
-            top: tooltipPosition.y,
-            transform: 'translate(-50%, -100%)',
+            left: tooltipPosition.x + 10,
+            top: tooltipPosition.y - 10,
           }}
         >
           <motion.div
