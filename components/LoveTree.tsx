@@ -535,8 +535,8 @@ function AdultTreeStage({
   logs: PositiveMoment[];
   onElementClick: (logId: string) => void;
 }) {
-  // Calculate how many branches to show (each branch = 10 leaves)
-  const totalBranches = Math.min(Math.floor((logCount - 70) / 10) + 1, 10);
+  // Calculate how many branches to show (each branch = 10 leaves) - max 6 branches
+  const totalBranches = Math.min(Math.floor((logCount - 70) / 10) + 1, 6);
 
   // Keep all 10 roots from Seed stage
   const rootPaths = [
@@ -552,18 +552,14 @@ function AdultTreeStage({
     "M 170 310 L 170 340 L 170 370 L 175 392 L 182 410",
   ];
 
-  // Define branches - alternating left, right, left, right, top pattern
+  // Define 6 branches - alternating left, right pattern
   const branchConfigs = [
-    { path: "M 165 180 Q 140 165 115 155 L 65 145", startX: 115, startY: 155, endX: 65, endY: 145 }, // Left
-    { path: "M 175 180 Q 200 165 225 155 L 275 145", startX: 225, startY: 155, endX: 275, endY: 145 }, // Right
-    { path: "M 165 140 Q 140 125 115 115 L 75 105", startX: 115, startY: 115, endX: 75, endY: 105 }, // Left
-    { path: "M 175 140 Q 200 125 225 115 L 265 105", startX: 225, startY: 115, endX: 265, endY: 105 }, // Right
-    { path: "M 165 100 Q 140 85 115 75 L 85 65", startX: 115, startY: 75, endX: 85, endY: 65 }, // Left
-    { path: "M 175 100 Q 200 85 225 75 L 255 65", startX: 225, startY: 75, endX: 255, endY: 65 }, // Right
-    { path: "M 165 70 Q 140 55 115 45 L 95 35", startX: 115, startY: 45, endX: 95, endY: 35 }, // Left
-    { path: "M 175 70 Q 200 55 225 45 L 245 35", startX: 225, startY: 45, endX: 245, endY: 35 }, // Right
-    { path: "M 168 50 Q 165 40 165 30 L 165 15", startX: 165, startY: 30, endX: 165, endY: 15 }, // Top
-    { path: "M 172 50 Q 175 40 175 30 L 175 15", startX: 175, startY: 30, endX: 175, endY: 15 }, // Top
+    { path: "M 165 180 Q 140 165 115 155 L 65 145", startX: 115, startY: 155, endX: 65, endY: 145 }, // Left 1
+    { path: "M 175 180 Q 200 165 225 155 L 275 145", startX: 225, startY: 155, endX: 275, endY: 145 }, // Right 1
+    { path: "M 165 140 Q 140 125 115 115 L 75 105", startX: 115, startY: 115, endX: 75, endY: 105 }, // Left 2
+    { path: "M 175 140 Q 200 125 225 115 L 265 105", startX: 225, startY: 115, endX: 265, endY: 105 }, // Right 2
+    { path: "M 165 100 Q 140 85 115 75 L 85 65", startX: 115, startY: 75, endX: 85, endY: 65 }, // Left 3
+    { path: "M 175 100 Q 200 85 225 75 L 255 65", startX: 225, startY: 75, endX: 255, endY: 65 }, // Right 3
   ];
 
   const branches = branchConfigs.slice(0, totalBranches).map((config, idx) => {
