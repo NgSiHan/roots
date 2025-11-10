@@ -5,9 +5,9 @@ import { useMemo } from 'react';
 
 /**
  * Tree of Love - Log-based growth stages
- * Stage 1 (0-9 logs): Seed with roots
- * Stage 2 (10-19 logs): Seedling with stem + leaves
- * Stage 3 (20-69 logs): Sprout with branches and leaves
+ * Stage 1 (0-9 logs): Seed with 10 individual roots
+ * Stage 2 (10-19 logs): Sprout with stem + leaves (roots still visible)
+ * Stage 3 (20-69 logs): Young Tree with branches and individual leaves
  * Stage 4 (70+ logs): Adult tree with unlimited growth
  */
 
@@ -21,13 +21,13 @@ export default function LoveTree({ score }: LoveTreeProps) {
   // Determine stage based on log count
   const stage = useMemo(() => {
     if (logCount < 10) return 1; // Seed
-    if (logCount < 20) return 2; // Seedling
-    if (logCount < 70) return 3; // Sprout
+    if (logCount < 20) return 2; // Sprout
+    if (logCount < 70) return 3; // Young Tree
     return 4; // Adult Tree
   }, [logCount]);
 
   const stageName = useMemo(() => {
-    const names = ['Seed', 'Seedling', 'Sprout', 'Adult Tree'];
+    const names = ['Seed', 'Sprout', 'Young Tree', 'Adult Tree'];
     return names[stage - 1];
   }, [stage]);
 
@@ -43,8 +43,8 @@ export default function LoveTree({ score }: LoveTreeProps) {
           className="relative"
         >
           {stage === 1 && <SeedStage logCount={logCount} />}
-          {stage === 2 && <SeedlingStage logCount={logCount} />}
-          {stage === 3 && <SproutStage logCount={logCount} />}
+          {stage === 2 && <SproutStage logCount={logCount} />}
+          {stage === 3 && <YoungTreeStage logCount={logCount} />}
           {stage === 4 && <AdultTreeStage logCount={logCount} />}
         </motion.div>
       </AnimatePresence>
@@ -64,9 +64,23 @@ export default function LoveTree({ score }: LoveTreeProps) {
   );
 }
 
-// Stage 1: Seed with growing roots (0-9 logs)
+// Stage 1: Seed with 10 individual roots (0-9 logs)
 function SeedStage({ logCount }: { logCount: number }) {
   const rootCount = Math.min(logCount, 10);
+
+  // 10 distinct roots spreading out horizontally
+  const roots = [
+    { x: 80, endY: 280 },   // Root 1 - far left
+    { x: 95, endY: 290 },   // Root 2
+    { x: 110, endY: 285 },  // Root 3
+    { x: 125, endY: 295 },  // Root 4
+    { x: 140, endY: 290 },  // Root 5
+    { x: 160, endY: 290 },  // Root 6
+    { x: 175, endY: 295 },  // Root 7
+    { x: 190, endY: 285 },  // Root 8
+    { x: 205, endY: 290 },  // Root 9
+    { x: 220, endY: 280 },  // Root 10 - far right
+  ];
 
   return (
     <svg width="300" height="350" viewBox="0 0 300 350" className="drop-shadow-lg">
@@ -86,118 +100,21 @@ function SeedStage({ logCount }: { logCount: number }) {
         <ellipse cx="150" cy="200" rx="12" ry="16" fill="#A0826B" />
       </motion.g>
 
-      {/* Growing roots underground - binary tree structure */}
+      {/* 10 individual roots - each log adds one root */}
       <g opacity="0.6">
-        {rootCount >= 1 && (
+        {roots.slice(0, rootCount).map((root, i) => (
           <motion.path
-            d="M 150 200 L 150 230"
-            stroke="#7A6F5D"
-            strokeWidth="3"
-            fill="none"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-          />
-        )}
-        {rootCount >= 2 && (
-          <motion.path
-            d="M 150 230 Q 140 240 130 250"
+            key={i}
+            d={`M 150 200 Q ${(150 + root.x) / 2} 230 ${root.x} ${root.endY}`}
             stroke="#7A6F5D"
             strokeWidth="2"
             fill="none"
+            strokeLinecap="round"
             initial={{ pathLength: 0 }}
             animate={{ pathLength: 1 }}
-            transition={{ duration: 0.4, delay: 0.7 }}
+            transition={{ duration: 0.5, delay: 0.5 + i * 0.1 }}
           />
-        )}
-        {rootCount >= 3 && (
-          <motion.path
-            d="M 150 230 Q 160 240 170 250"
-            stroke="#7A6F5D"
-            strokeWidth="2"
-            fill="none"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 0.4, delay: 0.8 }}
-          />
-        )}
-        {rootCount >= 4 && (
-          <motion.path
-            d="M 130 250 Q 120 260 110 270"
-            stroke="#7A6F5D"
-            strokeWidth="1.5"
-            fill="none"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 0.3, delay: 0.9 }}
-          />
-        )}
-        {rootCount >= 5 && (
-          <motion.path
-            d="M 130 250 Q 135 260 140 270"
-            stroke="#7A6F5D"
-            strokeWidth="1.5"
-            fill="none"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 0.3, delay: 1.0 }}
-          />
-        )}
-        {rootCount >= 6 && (
-          <motion.path
-            d="M 170 250 Q 165 260 160 270"
-            stroke="#7A6F5D"
-            strokeWidth="1.5"
-            fill="none"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 0.3, delay: 1.1 }}
-          />
-        )}
-        {rootCount >= 7 && (
-          <motion.path
-            d="M 170 250 Q 180 260 190 270"
-            stroke="#7A6F5D"
-            strokeWidth="1.5"
-            fill="none"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 0.3, delay: 1.2 }}
-          />
-        )}
-        {rootCount >= 8 && (
-          <motion.path
-            d="M 110 270 Q 105 280 100 290"
-            stroke="#7A6F5D"
-            strokeWidth="1"
-            fill="none"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 0.3, delay: 1.3 }}
-          />
-        )}
-        {rootCount >= 9 && (
-          <motion.path
-            d="M 140 270 Q 145 280 150 290"
-            stroke="#7A6F5D"
-            strokeWidth="1"
-            fill="none"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 0.3, delay: 1.4 }}
-          />
-        )}
-        {rootCount >= 10 && (
-          <motion.path
-            d="M 190 270 Q 195 280 200 290"
-            stroke="#7A6F5D"
-            strokeWidth="1"
-            fill="none"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 0.3, delay: 1.5 }}
-          />
-        )}
+        ))}
       </g>
 
       {/* Tiny sprout emerging */}
@@ -224,15 +141,43 @@ function SeedStage({ logCount }: { logCount: number }) {
   );
 }
 
-// Stage 2: Seedling with stem + 10 leaves (10-19 logs)
-function SeedlingStage({ logCount }: { logCount: number }) {
+// Stage 2: Sprout with stem + 10 leaves (10-19 logs) - roots still visible
+function SproutStage({ logCount }: { logCount: number }) {
   const leafCount = Math.min(logCount - 10, 10);
+
+  // Keep all 10 roots from Seed stage
+  const roots = [
+    { x: 80, endY: 280 },
+    { x: 95, endY: 290 },
+    { x: 110, endY: 285 },
+    { x: 125, endY: 295 },
+    { x: 140, endY: 290 },
+    { x: 160, endY: 290 },
+    { x: 175, endY: 295 },
+    { x: 190, endY: 285 },
+    { x: 205, endY: 290 },
+    { x: 220, endY: 280 },
+  ];
 
   return (
     <svg width="300" height="350" viewBox="0 0 300 350" className="drop-shadow-lg">
       {/* Ground */}
       <line x1="50" y1="250" x2="250" y2="250" stroke="#C8B6A6" strokeWidth="3" />
       <ellipse cx="150" cy="260" rx="70" ry="35" fill="#D4A574" opacity="0.6" />
+
+      {/* All 10 roots from Seed stage - still visible */}
+      <g opacity="0.4">
+        {roots.map((root, i) => (
+          <path
+            key={i}
+            d={`M 150 250 Q ${(150 + root.x) / 2} 270 ${root.x} ${root.endY}`}
+            stroke="#7A6F5D"
+            strokeWidth="1.5"
+            fill="none"
+            strokeLinecap="round"
+          />
+        ))}
+      </g>
 
       {/* Main stem */}
       <motion.path
@@ -281,10 +226,44 @@ function SeedlingStage({ logCount }: { logCount: number }) {
   );
 }
 
-// Stage 3: Sprout with 5 branches × 10 leaves each (20-69 logs)
-function SproutStage({ logCount }: { logCount: number }) {
-  const totalLeaves = Math.min(logCount - 20, 50);
-  const branchCount = Math.min(Math.floor(totalLeaves / 10) + 1, 5);
+// Stage 3: Young Tree with 5 branches × 10 individual leaves each (20-69 logs)
+function YoungTreeStage({ logCount }: { logCount: number }) {
+  const logsInStage = logCount - 20; // 0-49 logs in this stage
+  const totalLeaves = Math.min(logsInStage, 50);
+
+  // Calculate which branches are active and how many leaves each has
+  const branches = [
+    {
+      active: totalLeaves > 0,
+      leafCount: Math.min(totalLeaves, 10),
+      path: "M 145 140 Q 130 125 115 120 L 80 110",
+      startX: 115, startY: 120, endX: 80, endY: 110,
+    },
+    {
+      active: totalLeaves > 10,
+      leafCount: Math.min(Math.max(0, totalLeaves - 10), 10),
+      path: "M 146 140 Q 160 125 175 120 L 210 110",
+      startX: 175, startY: 120, endX: 210, endY: 110,
+    },
+    {
+      active: totalLeaves > 20,
+      leafCount: Math.min(Math.max(0, totalLeaves - 20), 10),
+      path: "M 145 100 Q 130 90 115 85 L 90 75",
+      startX: 115, startY: 85, endX: 90, endY: 75,
+    },
+    {
+      active: totalLeaves > 30,
+      leafCount: Math.min(Math.max(0, totalLeaves - 30), 10),
+      path: "M 147 100 Q 160 90 175 85 L 200 75",
+      startX: 175, startY: 85, endX: 200, endY: 75,
+    },
+    {
+      active: totalLeaves > 40,
+      leafCount: Math.min(Math.max(0, totalLeaves - 40), 10),
+      path: "M 146 70 Q 146 60 145 50 L 145 30",
+      startX: 145, startY: 50, endX: 145, endY: 30,
+    },
+  ];
 
   return (
     <svg width="300" height="350" viewBox="0 0 300 350" className="drop-shadow-lg">
@@ -304,51 +283,47 @@ function SproutStage({ logCount }: { logCount: number }) {
         transition={{ duration: 0.6 }}
       />
 
-      {/* 5 Branches growing progressively */}
-      <motion.g
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ duration: 0.8, delay: 0.3 }}
-      >
-        {branchCount >= 1 && (
-          <path d="M 145 140 Q 120 120 100 110" stroke="#8B6F47" strokeWidth="5" fill="none" strokeLinecap="round" />
-        )}
-        {branchCount >= 2 && (
-          <path d="M 146 140 Q 170 120 190 110" stroke="#8B6F47" strokeWidth="5" fill="none" strokeLinecap="round" />
-        )}
-        {branchCount >= 3 && (
-          <path d="M 145 100 Q 125 85 110 75" stroke="#8B6F47" strokeWidth="4" fill="none" strokeLinecap="round" />
-        )}
-        {branchCount >= 4 && (
-          <path d="M 147 100 Q 165 85 180 75" stroke="#8B6F47" strokeWidth="4" fill="none" strokeLinecap="round" />
-        )}
-        {branchCount >= 5 && (
-          <path d="M 146 70 Q 146 55 145 40" stroke="#8B6F47" strokeWidth="4" fill="none" strokeLinecap="round" />
-        )}
-      </motion.g>
+      {/* Branches with individual leaves */}
+      {branches.map((branch, branchIdx) =>
+        branch.active && (
+          <g key={branchIdx}>
+            {/* Branch path */}
+            <motion.path
+              d={branch.path}
+              stroke="#8B6F47"
+              strokeWidth="4"
+              fill="none"
+              strokeLinecap="round"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 0.6, delay: 0.3 + branchIdx * 0.1 }}
+            />
 
-      {/* Leaf clusters for each branch (10 leaves per branch) */}
-      {[
-        { cx: 100, cy: 110, r: 25 },
-        { cx: 190, cy: 110, r: 25 },
-        { cx: 110, cy: 75, r: 20 },
-        { cx: 180, cy: 75, r: 20 },
-        { cx: 145, cy: 40, r: 30 },
-      ].map((cluster, i) => (
-        i < branchCount && (
-          <motion.circle
-            key={i}
-            cx={cluster.cx}
-            cy={cluster.cy}
-            r={cluster.r}
-            fill="#A8C69F"
-            opacity="0.85"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.5 + i * 0.1 }}
-          />
+            {/* Individual leaves along the branch (10 per branch) */}
+            {Array.from({ length: branch.leafCount }).map((_, leafIdx) => {
+              const progress = (leafIdx + 1) / 10; // 0.1 to 1.0
+              const x = branch.startX + (branch.endX - branch.startX) * progress;
+              const y = branch.startY + (branch.endY - branch.startY) * progress;
+              const rotation = branchIdx % 2 === 0 ? -30 : 30;
+
+              return (
+                <motion.ellipse
+                  key={leafIdx}
+                  cx={x}
+                  cy={y}
+                  rx="6"
+                  ry="10"
+                  fill="#A8C69F"
+                  transform={`rotate(${rotation} ${x} ${y})`}
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.3, delay: 0.5 + branchIdx * 0.1 + leafIdx * 0.05 }}
+                />
+              );
+            })}
+          </g>
         )
-      ))}
+      )}
     </svg>
   );
 }

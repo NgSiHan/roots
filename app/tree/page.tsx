@@ -52,8 +52,8 @@ export default function TreePage() {
   // Calculate tree stage based on log count
   const getTreeStage = (logs: number) => {
     if (logs < 10) return { name: 'Seed', progress: logs, max: 10 };
-    if (logs < 20) return { name: 'Seedling', progress: logs - 10, max: 10 };
-    if (logs < 70) return { name: 'Sprout', progress: logs - 20, max: 50 };
+    if (logs < 20) return { name: 'Sprout', progress: logs - 10, max: 10 };
+    if (logs < 70) return { name: 'Young Tree', progress: logs - 20, max: 50 };
     return { name: 'Adult Tree', progress: logs - 70, max: null };
   };
 
@@ -207,8 +207,8 @@ export default function TreePage() {
   // Get stage description
   const getStageDescription = (stage: string) => {
     if (stage === 'Seed') return 'Your relationship is just beginning to take root. Every log creates a new root!';
-    if (stage === 'Seedling') return 'Growth is happening! Your roots are spreading and a stem is forming.';
-    if (stage === 'Sprout') return 'Your relationship is branching out beautifully. Leaves are growing with each log!';
+    if (stage === 'Sprout') return 'Growth is happening! Your roots are spreading and a stem is forming.';
+    if (stage === 'Young Tree') return 'Your relationship is branching out beautifully. New leaves grow with each log!';
     return 'Flourishing together! Your tree continues to grow with unlimited branches and leaves.';
   };
 
