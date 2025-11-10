@@ -816,41 +816,10 @@ function AdultTreeStage({
             {branch.branchLogs.slice(0, branch.leafCount).map((log, leafIdx) => {
               const isStarred = log?.starred;
 
-              // Distribute leaves evenly along branch using approximation
-              // Use more control points for smoother curve following
-              const progress = branch.leafCount > 1 ? leafIdx / (branch.leafCount - 1) : 0.5;
-
-              // Calculate position along the curved branch path
-              // Interpolate from trunk through the curve to the tip
-              const trunkX = branch.startX;
-              const trunkY = branch.startY;
-              const isLeft = branchIdx % 2 === 0;
-
-              // Approximate the curve with three segments for better accuracy
-              let baseX, baseY;
-              if (progress < 0.33) {
-                // First third: trunk to first control point area
-                const t = progress / 0.33;
-                const midX = isLeft ? trunkX - 20 : trunkX + 20;
-                const midY = trunkY - 10;
-                baseX = trunkX + (midX - trunkX) * t;
-                baseY = trunkY + (midY - trunkY) * t;
-              } else if (progress < 0.67) {
-                // Middle third: curve area
-                const t = (progress - 0.33) / 0.34;
-                const startMidX = isLeft ? trunkX - 20 : trunkX + 20;
-                const startMidY = trunkY - 10;
-                const endMidX = isLeft ? branch.endX + 40 : branch.endX - 40;
-                const endMidY = branch.endY;
-                baseX = startMidX + (endMidX - startMidX) * t;
-                baseY = startMidY + (endMidY - startMidY) * t;
-              } else {
-                // Final third: approaching tip
-                const t = (progress - 0.67) / 0.33;
-                const startX = isLeft ? branch.endX + 40 : branch.endX - 40;
-                baseX = startX + (branch.endX - startX) * t;
-                baseY = branch.endY + (branch.endY - branch.endY) * t;
-              }
+              // Distribute leaves with proper spacing along branch (same as Young Tree)
+              const progress = (leafIdx + 0.5) / branch.branchCapacity;
+              const baseX = branch.startX + (branch.endX - branch.startX) * progress;
+              const baseY = branch.startY + (branch.endY - branch.startY) * progress;
 
               // Alternate leaves above/below branch line
               const isTopSide = leafIdx % 2 === 0;
