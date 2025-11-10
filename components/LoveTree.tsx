@@ -531,8 +531,10 @@ function YoungTreeStage({
   );
 }
 
-// Stage 4: Adult tree with branch+leaf+fruit logic (70+ logs)
-// Displays logs 10+ on dynamic branches (up to 10 branches), with roots showing logs 0-9
+// Stage 4: Adult tree with unlimited growth (70+ logs)
+// Displays logs 10+ on unlimited dynamic branches alternating left/right
+// Tree grows taller and wider as more logs are added
+// Roots always show logs 0-9
 function AdultTreeStage({
   logCount,
   logs,
@@ -546,7 +548,13 @@ function AdultTreeStage({
   // (Logs 0-9 are shown as roots)
   // Calculate how many branches needed based on total log count
   const logsForBranches = Math.max(0, logCount - 10); // Logs after the 10 roots
-  const totalBranches = Math.min(Math.ceil(logsForBranches / 10), 10); // Up to 10 branches max
+  const totalBranches = Math.ceil(logsForBranches / 10); // Unlimited branches
+
+  // Dynamic height based on number of branches
+  const baseHeight = 420;
+  const heightPerBranch = 40; // Each branch adds 40 units of height
+  const svgHeight = Math.max(baseHeight, baseHeight + (totalBranches - 6) * heightPerBranch);
+  const viewBoxHeight = svgHeight;
 
   // Keep all 10 roots from Seed stage
   const rootPaths = [
@@ -562,21 +570,40 @@ function AdultTreeStage({
     "M 170 310 L 170 340 L 170 370 L 175 392 L 182 410",
   ];
 
-  // Define up to 10 branches - alternating left, right pattern
-  const branchConfigs = [
-    { path: "M 165 180 Q 140 165 115 155 L 65 145", startX: 115, startY: 155, endX: 65, endY: 145 }, // Left 1
-    { path: "M 175 180 Q 200 165 225 155 L 275 145", startX: 225, startY: 155, endX: 275, endY: 145 }, // Right 1
-    { path: "M 165 140 Q 140 125 115 115 L 75 105", startX: 115, startY: 115, endX: 75, endY: 105 }, // Left 2
-    { path: "M 175 140 Q 200 125 225 115 L 265 105", startX: 225, startY: 115, endX: 265, endY: 105 }, // Right 2
-    { path: "M 165 100 Q 140 85 115 75 L 85 65", startX: 115, startY: 75, endX: 85, endY: 65 }, // Left 3
-    { path: "M 175 100 Q 200 85 225 75 L 255 65", startX: 225, startY: 75, endX: 255, endY: 65 }, // Right 3
-    { path: "M 165 70 Q 140 55 115 45 L 95 35", startX: 115, startY: 45, endX: 95, endY: 35 }, // Left 4
-    { path: "M 175 70 Q 200 55 225 45 L 245 35", startX: 225, startY: 45, endX: 245, endY: 35 }, // Right 4
-    { path: "M 168 50 Q 165 35 165 25 L 165 10", startX: 165, startY: 25, endX: 165, endY: 10 }, // Top Left 5
-    { path: "M 172 50 Q 175 35 175 25 L 175 10", startX: 175, startY: 25, endX: 175, endY: 10 }, // Top Right 5
-  ];
+  // Generate branch configurations dynamically - unlimited growth
+  const generateBranchConfig = (idx: number) => {
+    const isLeft = idx % 2 === 0;
+    // Branches start at y=180 and go up by 40 units for each pair
+    const pairIndex = Math.floor(idx / 2);
+    const trunkY = 180 - pairIndex * 40;
 
-  const branches = branchConfigs.slice(0, totalBranches).map((config, idx) => {
+    if (isLeft) {
+      // Left branch
+      const midY = trunkY - 15;
+      const endY = trunkY - 25;
+      return {
+        path: `M 165 ${trunkY} Q 140 ${midY} 115 ${endY} L 65 ${endY - 10}`,
+        startX: 115,
+        startY: endY,
+        endX: 65,
+        endY: endY - 10,
+      };
+    } else {
+      // Right branch
+      const midY = trunkY - 15;
+      const endY = trunkY - 25;
+      return {
+        path: `M 175 ${trunkY} Q 200 ${midY} 225 ${endY} L 275 ${endY - 10}`,
+        startX: 225,
+        startY: endY,
+        endX: 275,
+        endY: endY - 10,
+      };
+    }
+  };
+
+  const branches = Array.from({ length: totalBranches }).map((_, idx) => {
+    const config = generateBranchConfig(idx);
     const logStartIdx = 10 + idx * 10; // Start from log 10 (after roots)
     const logsAvailableForBranch = Math.max(0, logCount - logStartIdx);
 
@@ -598,8 +625,12 @@ function AdultTreeStage({
     };
   });
 
+  // Calculate trunk end position based on highest branch
+  const highestBranchY = totalBranches > 0 ? 180 - Math.floor((totalBranches - 1) / 2) * 40 - 40 : 40;
+  const trunkEndY = Math.max(10, highestBranchY);
+
   return (
-    <svg width="340" height="420" viewBox="0 0 340 420" className="drop-shadow-2xl">
+    <svg width="340" height={svgHeight} viewBox={`0 0 340 ${viewBoxHeight}`} className="drop-shadow-2xl">
       {/* Ground with grass texture */}
       <motion.g
         initial={{ opacity: 0 }}
@@ -661,9 +692,9 @@ function AdultTreeStage({
         })}
       </g>
 
-      {/* Trunk - thicker for adult tree */}
+      {/* Trunk - thicker for adult tree, extends dynamically based on branches */}
       <motion.path
-        d="M 165 310 Q 164 260 165 210 Q 164 160 166 110 Q 167 70 168 40"
+        d={`M 165 310 Q 164 260 165 210 Q 164 160 166 110 Q 167 ${(110 + trunkEndY) / 2} 168 ${trunkEndY}`}
         stroke="#8B6F47"
         strokeWidth="12"
         fill="none"
