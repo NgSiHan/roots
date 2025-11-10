@@ -218,8 +218,8 @@ export default function TreePage() {
           {/* Header */}
           <div className="text-center mb-6">
             <h1 className="text-3xl font-bold text-moss mb-2">Tree of Love</h1>
-            <p className="text-gray-600 text-sm max-w-md mx-auto">
-              {getStageDescription(treeStage.name)}
+            <p className="text-gray-600 text-sm max-w-md mx-auto" suppressHydrationWarning>
+              {mounted ? getStageDescription(treeStage.name) : 'Track your positive moments and watch your tree grow!'}
             </p>
           </div>
 
@@ -231,19 +231,21 @@ export default function TreePage() {
           {/* Stage and Log Count display */}
           <div className="text-center mb-6">
             <div className="inline-block bg-gradient-to-r from-sage/30 to-moss/30 px-8 py-4 rounded-2xl shadow-md">
-              <p className="text-sm text-gray-600 mb-1">{treeStage.name}</p>
+              <p className="text-sm text-gray-600 mb-1" suppressHydrationWarning>
+                {mounted ? treeStage.name : 'Seed'}
+              </p>
               <p className="text-3xl font-bold text-moss" suppressHydrationWarning>
                 {mounted ? logCount : 0} {logCount === 1 ? 'Log' : 'Logs'}
               </p>
-              <p className="text-xs text-gray-500 mt-1">
-                {treeScore} total points earned
+              <p className="text-xs text-gray-500 mt-1" suppressHydrationWarning>
+                {mounted ? treeScore : 0} total points earned
               </p>
             </div>
           </div>
 
           {/* Progress bar */}
           <div className="mb-8 max-w-md mx-auto">
-            {treeStage.max && (
+            {mounted && treeStage.max && (
               <>
                 <div className="flex justify-between text-xs text-gray-600 mb-2">
                   <span>Next stage: {treeStage.progress}/{treeStage.max}</span>
