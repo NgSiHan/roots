@@ -372,6 +372,7 @@ export default function TreePage() {
                     score={logCount}
                     logs={treeLogs}
                     onElementClick={(logId) => setSelectedLogId(logId)}
+                    familyMembers={activeTree?.members || []}
                   />
                 ) : (
                   <div className="h-[450px] flex items-center justify-center">

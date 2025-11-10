@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 /**
  * Tree of Love - Log-based growth stages
@@ -17,10 +17,13 @@ interface LoveTreeProps {
   score: number; // This is actually logCount now
   logs: PositiveMoment[]; // All logs for this tree, sorted chronologically
   onElementClick: (logId: string) => void; // Called when clicking a tree element
+  familyMembers?: { id: string; name: string }[]; // For tooltip display
 }
 
-export default function LoveTree({ score, logs, onElementClick }: LoveTreeProps) {
+export default function LoveTree({ score, logs, onElementClick, familyMembers = [] }: LoveTreeProps) {
   const logCount = score; // score is actually logCount
+  const [hoveredLog, setHoveredLog] = useState<PositiveMoment | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Determine stage based on log count
   const stage = useMemo(() => {
@@ -35,6 +38,28 @@ export default function LoveTree({ score, logs, onElementClick }: LoveTreeProps)
     return names[stage - 1];
   }, [stage]);
 
+  // Mouse event handlers for tooltip
+  const handleMouseEnter = (e: React.MouseEvent, log: PositiveMoment) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setTooltipPosition({
+      x: rect.left + rect.width / 2,
+      y: rect.top - 10,
+    });
+    setHoveredLog(log);
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredLog(null);
+  };
+
+  // Get participant names for tooltip
+  const getParticipantNames = (log: PositiveMoment) => {
+    return log.participantIds
+      .map((id) => familyMembers.find((m) => m.id === id)?.name)
+      .filter(Boolean)
+      .join(', ') || 'Unknown';
+  };
+
   return (
     <div className="relative w-full h-[450px] flex items-center justify-center">
       <AnimatePresence mode="wait">
@@ -46,10 +71,10 @@ export default function LoveTree({ score, logs, onElementClick }: LoveTreeProps)
           transition={{ duration: 0.5, ease: 'easeOut' }}
           className="relative"
         >
-          {stage === 1 && <SeedStage logCount={logCount} logs={logs} onElementClick={onElementClick} />}
-          {stage === 2 && <SproutStage logCount={logCount} logs={logs} onElementClick={onElementClick} />}
-          {stage === 3 && <YoungTreeStage logCount={logCount} logs={logs} onElementClick={onElementClick} />}
-          {stage === 4 && <AdultTreeStage logCount={logCount} logs={logs} onElementClick={onElementClick} />}
+          {stage === 1 && <SeedStage logCount={logCount} logs={logs} onElementClick={onElementClick} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} />}
+          {stage === 2 && <SproutStage logCount={logCount} logs={logs} onElementClick={onElementClick} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} />}
+          {stage === 3 && <YoungTreeStage logCount={logCount} logs={logs} onElementClick={onElementClick} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} />}
+          {stage === 4 && <AdultTreeStage logCount={logCount} logs={logs} onElementClick={onElementClick} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} />}
         </motion.div>
       </AnimatePresence>
 
@@ -64,6 +89,56 @@ export default function LoveTree({ score, logs, onElementClick }: LoveTreeProps)
           <p className="text-sm font-semibold text-moss">{stageName}</p>
         </motion.div>
       </div>
+
+      {/* Google Maps style tooltip */}
+      {hoveredLog && (
+        <div
+          className="fixed z-50 pointer-events-none"
+          style={{
+            left: tooltipPosition.x,
+            top: tooltipPosition.y,
+            transform: 'translate(-50%, -100%)',
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 5 }}
+            className="bg-white rounded-lg shadow-lg px-3 py-2 min-w-[200px] border border-gray-200"
+          >
+            <div className="text-xs space-y-1">
+              <div className="font-semibold text-moss flex items-center gap-1">
+                {hoveredLog.starred && <span>⭐</span>}
+                {hoveredLog.activityName || 'Positive Moment'}
+              </div>
+              <div className="text-gray-600">
+                {new Date(hoveredLog.date).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+              </div>
+              <div className="text-gray-600">
+                {getParticipantNames(hoveredLog)}
+              </div>
+              {hoveredLog.notes && (
+                <div className="text-gray-500 italic text-[10px] line-clamp-2">
+                  "{hoveredLog.notes}"
+                </div>
+              )}
+              <div className="flex items-center gap-1">
+                {Array.from({ length: hoveredLog.emotionRating }).map((_, i) => (
+                  <span key={i} className="text-[10px]">😊</span>
+                ))}
+              </div>
+            </div>
+            {/* Tooltip pointer */}
+            <div
+              className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2 h-2 bg-white border-r border-b border-gray-200 transform rotate-45"
+            ></div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
@@ -73,10 +148,14 @@ function SeedStage({
   logCount,
   logs,
   onElementClick,
+  onMouseEnter,
+  onMouseLeave,
 }: {
   logCount: number;
   logs: PositiveMoment[];
   onElementClick: (logId: string) => void;
+  onMouseEnter: (e: React.MouseEvent, log: PositiveMoment) => void;
+  onMouseLeave: () => void;
 }) {
   const rootCount = Math.min(logCount, 10);
 
@@ -132,6 +211,8 @@ function SeedStage({
                 animate={{ pathLength: 1 }}
                 transition={{ duration: 0.5, delay: 0.5 + i * 0.1 }}
                 onClick={() => log && onElementClick(log.id)}
+                onMouseEnter={(e) => log && onMouseEnter(e, log)}
+                onMouseLeave={onMouseLeave}
                 style={{ cursor: log ? 'pointer' : 'default' }}
                 className={log ? 'hover:opacity-80 transition-opacity' : ''}
               />
@@ -146,6 +227,8 @@ function SeedStage({
                   animate={{ scale: [1, 1.3, 1] }}
                   transition={{ duration: 1.5, repeat: Infinity }}
                   onClick={() => onElementClick(log.id)}
+                  onMouseEnter={(e) => onMouseEnter(e, log)}
+                  onMouseLeave={onMouseLeave}
                   style={{ cursor: 'pointer' }}
                 />
               )}
@@ -183,10 +266,14 @@ function SproutStage({
   logCount,
   logs,
   onElementClick,
+  onMouseEnter,
+  onMouseLeave,
 }: {
   logCount: number;
   logs: PositiveMoment[];
   onElementClick: (logId: string) => void;
+  onMouseEnter: (e: React.MouseEvent, log: PositiveMoment) => void;
+  onMouseLeave: () => void;
 }) {
   const leafCount = Math.min(logCount - 10, 10);
 
@@ -226,6 +313,8 @@ function SproutStage({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 onClick={() => log && onElementClick(log.id)}
+                onMouseEnter={(e) => log && onMouseEnter(e, log)}
+                onMouseLeave={onMouseLeave}
                 style={{ cursor: log ? 'pointer' : 'default' }}
                 className={log ? 'hover:opacity-80 transition-opacity' : ''}
               />
@@ -240,6 +329,8 @@ function SproutStage({
                   animate={{ scale: [1, 1.3, 1] }}
                   transition={{ duration: 1.5, repeat: Infinity }}
                   onClick={() => onElementClick(log.id)}
+                  onMouseEnter={(e) => onMouseEnter(e, log)}
+                  onMouseLeave={onMouseLeave}
                   style={{ cursor: 'pointer' }}
                 />
               )}
@@ -281,6 +372,8 @@ function SproutStage({
             <g
               transform={`translate(${x}, ${stemY}) rotate(${rotation})`}
               onClick={() => log && onElementClick(log.id)}
+              onMouseEnter={(e) => log && onMouseEnter(e, log)}
+              onMouseLeave={onMouseLeave}
               style={{ cursor: log ? 'pointer' : 'default' }}
               className={log ? 'hover:opacity-80 transition-opacity' : ''}
             >
@@ -322,10 +415,14 @@ function YoungTreeStage({
   logCount,
   logs,
   onElementClick,
+  onMouseEnter,
+  onMouseLeave,
 }: {
   logCount: number;
   logs: PositiveMoment[];
   onElementClick: (logId: string) => void;
+  onMouseEnter: (e: React.MouseEvent, log: PositiveMoment) => void;
+  onMouseLeave: () => void;
 }) {
   // First branch starts with 10 leaves (from Sprout transition)
   // Each additional log adds to subsequent branches
@@ -407,6 +504,8 @@ function YoungTreeStage({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 onClick={() => log && onElementClick(log.id)}
+                onMouseEnter={(e) => log && onMouseEnter(e, log)}
+                onMouseLeave={onMouseLeave}
                 style={{ cursor: log ? 'pointer' : 'default' }}
                 className={log ? 'hover:opacity-80 transition-opacity' : ''}
               />
@@ -421,6 +520,8 @@ function YoungTreeStage({
                   animate={{ scale: [1, 1.3, 1] }}
                   transition={{ duration: 1.5, repeat: Infinity }}
                   onClick={() => onElementClick(log.id)}
+                  onMouseEnter={(e) => onMouseEnter(e, log)}
+                  onMouseLeave={onMouseLeave}
                   style={{ cursor: 'pointer' }}
                 />
               )}
@@ -492,6 +593,8 @@ function YoungTreeStage({
                   <g
                     transform={`translate(${baseX}, ${y}) rotate(${rotation})`}
                     onClick={() => log && onElementClick(log.id)}
+                    onMouseEnter={(e) => log && onMouseEnter(e, log)}
+                    onMouseLeave={onMouseLeave}
                     style={{ cursor: log ? 'pointer' : 'default' }}
                     className={log ? 'hover:opacity-80 transition-opacity' : ''}
                   >
@@ -539,10 +642,14 @@ function AdultTreeStage({
   logCount,
   logs,
   onElementClick,
+  onMouseEnter,
+  onMouseLeave,
 }: {
   logCount: number;
   logs: PositiveMoment[];
   onElementClick: (logId: string) => void;
+  onMouseEnter: (e: React.MouseEvent, log: PositiveMoment) => void;
+  onMouseLeave: () => void;
 }) {
   // Adult tree shows branches displaying logs 10+
   // (Logs 0-9 are shown as roots)
@@ -762,6 +869,8 @@ function AdultTreeStage({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 onClick={() => log && onElementClick(log.id)}
+                onMouseEnter={(e) => log && onMouseEnter(e, log)}
+                onMouseLeave={onMouseLeave}
                 style={{ cursor: log ? 'pointer' : 'default' }}
                 className={log ? 'hover:opacity-80 transition-opacity' : ''}
               />
@@ -776,6 +885,8 @@ function AdultTreeStage({
                   animate={{ scale: [1, 1.3, 1] }}
                   transition={{ duration: 1.5, repeat: Infinity }}
                   onClick={() => onElementClick(log.id)}
+                  onMouseEnter={(e) => onMouseEnter(e, log)}
+                  onMouseLeave={onMouseLeave}
                   style={{ cursor: 'pointer' }}
                 />
               )}
@@ -889,6 +1000,8 @@ function AdultTreeStage({
                   <g
                     transform={`translate(${baseX}, ${y}) rotate(${rotation})`}
                     onClick={() => log && onElementClick(log.id)}
+                    onMouseEnter={(e) => log && onMouseEnter(e, log)}
+                    onMouseLeave={onMouseLeave}
                     style={{ cursor: log ? 'pointer' : 'default' }}
                     className={log ? 'hover:opacity-80 transition-opacity' : ''}
                   >
@@ -936,6 +1049,8 @@ function AdultTreeStage({
                     bounce: 0.4
                   }}
                   onClick={() => onElementClick(fruitLog.id)}
+                  onMouseEnter={(e) => onMouseEnter(e, fruitLog)}
+                  onMouseLeave={onMouseLeave}
                   style={{ cursor: 'pointer' }}
                   className="hover:opacity-80 transition-opacity"
                 >
