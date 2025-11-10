@@ -32,6 +32,7 @@ export default function TreePage() {
   // Modal form state
   const [activityName, setActivityName] = useState('');
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
+  const [additionalPeople, setAdditionalPeople] = useState('');
   const [momentDate, setMomentDate] = useState(new Date().toISOString().split('T')[0]);
   const [emotionRating, setEmotionRating] = useState<number | undefined>(undefined);
   const [notes, setNotes] = useState('');
@@ -128,8 +129,7 @@ export default function TreePage() {
   const calculatePoints = () => {
     let points = 1; // Base point for logging anything
 
-    if (activityName.trim()) points += 1;
-    if (selectedParticipants.length > 0) points += 1;
+    if (activityName.trim()) points += 2; // +2 for description
     if (emotionRating !== undefined) points += 1;
     if (uploadedPhotos.length > 0) points += 1;
 
@@ -155,6 +155,7 @@ export default function TreePage() {
       id: `moment-${Date.now()}`,
       activityName: activityName.trim() || undefined,
       participantIds: selectedParticipants,
+      additionalPeople: additionalPeople.trim() || undefined,
       date: momentDate,
       emotionRating,
       notes: notes.trim() || undefined,
@@ -180,6 +181,7 @@ export default function TreePage() {
     // Reset form and close modal
     setActivityName('');
     setSelectedParticipants([]);
+    setAdditionalPeople('');
     setMomentDate(new Date().toISOString().split('T')[0]);
     setEmotionRating(undefined);
     setNotes('');
@@ -521,10 +523,10 @@ export default function TreePage() {
                     </p>
                   </div>
 
-                  {/* Activity Name */}
+                  {/* Description */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Activity Name <span className="text-gray-400 font-normal">(Optional +1pt)</span>
+                      Description <span className="text-gray-400 font-normal">(Optional +2pt)</span>
                     </label>
                     <input
                       type="text"
@@ -538,7 +540,7 @@ export default function TreePage() {
                   {/* Who Was Involved */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Who Was Involved? <span className="text-gray-400 font-normal">(Optional +1pt)</span>
+                      Who Was Involved? <span className="text-gray-400 font-normal">(Optional)</span>
                     </label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                       {activeTree?.members.map((member) => (
@@ -554,6 +556,16 @@ export default function TreePage() {
                           {member.name}
                         </button>
                       ))}
+                    </div>
+                    {/* Additional People */}
+                    <div className="mt-3">
+                      <input
+                        type="text"
+                        value={additionalPeople}
+                        onChange={(e) => setAdditionalPeople(e.target.value)}
+                        placeholder="Add extended family or others (e.g., Grandma, Uncle Joe, Friends...)"
+                        className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:border-moss focus:outline-none transition-colors text-sm"
+                      />
                     </div>
                   </div>
 

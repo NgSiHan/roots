@@ -94,7 +94,8 @@ export interface CheckIn {
 export interface PositiveMoment {
   id: string;
   activityName?: string;
-  participantIds: string[]; // Who was involved
+  participantIds: string[]; // Who was involved (family members)
+  additionalPeople?: string; // Extended family or others
   date: string; // ISO date string
   emotionRating?: number; // 1-5
   notes?: string;
