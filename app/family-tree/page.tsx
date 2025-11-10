@@ -490,6 +490,7 @@ export default function FamilyTreePage() {
     lastExpandedAlbum: {},
     checkIns: [],
     notifications: [],
+    positiveMoments: [],
   });
 
   // Local state for viewing different trees on this page only

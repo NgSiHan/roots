@@ -3,9 +3,9 @@
 import AnimatedPage from '@/components/AnimatedPage';
 import LoveTree from '@/components/LoveTree';
 import { useLocalStorageState } from '@/hooks/useLocalStorageState';
-import { AppState } from '@/lib/types';
+import { AppState, PositiveMoment, Photo } from '@/lib/types';
 import { initialTrees, activitySuggestions, memoryCollectionsData } from '@/lib/seedData';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useMemo, useState, useEffect } from 'react';
 
 /**
@@ -23,9 +23,20 @@ export default function TreePage() {
     lastExpandedAlbum: {},
     checkIns: [],
     notifications: [],
+    positiveMoments: [],
   });
 
   const [mounted, setMounted] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+
+  // Modal form state
+  const [activityName, setActivityName] = useState('');
+  const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
+  const [momentDate, setMomentDate] = useState(new Date().toISOString().split('T')[0]);
+  const [emotionRating, setEmotionRating] = useState<number | undefined>(undefined);
+  const [notes, setNotes] = useState('');
+  const [uploadedPhotos, setUploadedPhotos] = useState<Photo[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -75,6 +86,105 @@ export default function TreePage() {
       tree.id === appState.activeFamilyTreeId ? { ...tree, treeScore: 0 } : tree
     );
     setAppState({ ...appState, trees: updatedTrees });
+  };
+
+  // Handle photo upload
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    const newPhotos: Photo[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const reader = new FileReader();
+      const photoPromise = new Promise<Photo>((resolve) => {
+        reader.onload = (event) => {
+          const base64 = event.target?.result as string;
+          resolve({
+            id: `photo-${Date.now()}-${i}`,
+            url: base64,
+            caption: file.name.replace(/\.[^/.]+$/, ''),
+            color: '#E8C4D4',
+          });
+        };
+      });
+      reader.readAsDataURL(file);
+      const photo = await photoPromise;
+      newPhotos.push(photo);
+    }
+
+    setUploadedPhotos([...uploadedPhotos, ...newPhotos]);
+    setUploading(false);
+  };
+
+  // Remove photo from upload list
+  const removePhoto = (photoId: string) => {
+    setUploadedPhotos(uploadedPhotos.filter((p) => p.id !== photoId));
+  };
+
+  // Calculate points based on what's filled in
+  const calculatePoints = () => {
+    let points = 1; // Base point for logging anything
+
+    if (activityName.trim()) points += 1;
+    if (selectedParticipants.length > 0) points += 1;
+    if (emotionRating !== undefined) points += 1;
+    if (uploadedPhotos.length > 0) points += 1;
+
+    return Math.min(5, points); // Cap at 5 points
+  };
+
+  // Toggle participant selection
+  const toggleParticipant = (personId: string) => {
+    if (selectedParticipants.includes(personId)) {
+      setSelectedParticipants(selectedParticipants.filter((id) => id !== personId));
+    } else {
+      setSelectedParticipants([...selectedParticipants, personId]);
+    }
+  };
+
+  // Submit positive moment
+  const handleSubmitMoment = () => {
+    if (!activeTree) return;
+
+    const points = calculatePoints();
+
+    const newMoment: PositiveMoment = {
+      id: `moment-${Date.now()}`,
+      activityName: activityName.trim() || undefined,
+      participantIds: selectedParticipants,
+      date: momentDate,
+      emotionRating,
+      notes: notes.trim() || undefined,
+      photos: uploadedPhotos,
+      pointsEarned: points,
+      timestamp: new Date().toISOString(),
+      treeId: appState.activeFamilyTreeId,
+    };
+
+    // Update tree score
+    const newScore = Math.min(100, treeScore + points);
+    const updatedTrees = appState.trees.map((tree) =>
+      tree.id === appState.activeFamilyTreeId ? { ...tree, treeScore: newScore } : tree
+    );
+
+    // Save moment and update score
+    setAppState({
+      ...appState,
+      trees: updatedTrees,
+      positiveMoments: [newMoment, ...(appState.positiveMoments || [])],
+    });
+
+    // Reset form and close modal
+    setActivityName('');
+    setSelectedParticipants([]);
+    setMomentDate(new Date().toISOString().split('T')[0]);
+    setEmotionRating(undefined);
+    setNotes('');
+    setUploadedPhotos([]);
+    setShowModal(false);
   };
 
   // Get stage description
@@ -128,29 +238,9 @@ export default function TreePage() {
 
           {/* Controls */}
           <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
-            {/* Demo controls */}
-            <div className="flex gap-2">
-              <button
-                onClick={() => updateScore(-5)}
-                disabled={treeScore <= 0}
-                className="w-10 h-10 bg-gray-200 text-gray-700 rounded-full font-bold hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400 transition-all hover:scale-110 active:scale-95 shadow-md"
-                title="Decrease (Demo)"
-              >
-                −
-              </button>
-              <button
-                onClick={() => updateScore(5)}
-                disabled={treeScore >= 100}
-                className="w-10 h-10 bg-moss/20 text-moss rounded-full font-bold hover:bg-moss/30 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400 transition-all hover:scale-110 active:scale-95 shadow-md"
-                title="Increase (Demo)"
-              >
-                +
-              </button>
-            </div>
-
             {/* Main action button */}
             <button
-              onClick={() => updateScore(5)}
+              onClick={() => setShowModal(true)}
               disabled={treeScore >= 100}
               className="px-6 py-3 bg-gradient-to-r from-moss to-sage text-white rounded-xl font-semibold hover:shadow-lg disabled:bg-gray-300 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95 shadow-md"
             >
@@ -377,6 +467,206 @@ export default function TreePage() {
             </div>
           </motion.div>
         </div>
+
+        {/* Positive Moment Modal */}
+        <AnimatePresence>
+          {showModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              onClick={() => setShowModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div className="sticky top-0 bg-gradient-to-r from-moss to-sage text-white p-6 rounded-t-2xl">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-bold mb-1">Log a Positive Moment</h2>
+                      <p className="text-sm text-white/90">
+                        Add details to earn up to 5 points!
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowModal(false)}
+                      className="text-white hover:bg-white/20 rounded-full p-2 transition-colors"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Form Content */}
+                <div className="p-6 space-y-6">
+                  {/* Points Preview */}
+                  <div className="bg-gradient-to-r from-sage/20 to-moss/20 border-2 border-moss/30 rounded-xl p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Points you&apos;ll earn</p>
+                        <p className="text-3xl font-bold text-moss">{calculatePoints()}</p>
+                      </div>
+                      <div className="text-5xl">⭐</div>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-2">
+                      Fill in more details to earn more points!
+                    </p>
+                  </div>
+
+                  {/* Activity Name */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Activity Name <span className="text-gray-400 font-normal">(Optional +1pt)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={activityName}
+                      onChange={(e) => setActivityName(e.target.value)}
+                      placeholder="e.g., Family Game Night, Cooking Together..."
+                      className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:border-moss focus:outline-none transition-colors"
+                    />
+                  </div>
+
+                  {/* Who Was Involved */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Who Was Involved? <span className="text-gray-400 font-normal">(Optional +1pt)</span>
+                    </label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {activeTree?.members.map((member) => (
+                        <button
+                          key={member.id}
+                          onClick={() => toggleParticipant(member.id)}
+                          className={`px-4 py-2 rounded-lg border-2 transition-all ${
+                            selectedParticipants.includes(member.id)
+                              ? 'bg-moss text-white border-moss'
+                              : 'bg-white text-gray-700 border-gray-300 hover:border-moss'
+                          }`}
+                        >
+                          {member.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Date */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      When Did This Happen?
+                    </label>
+                    <input
+                      type="date"
+                      value={momentDate}
+                      onChange={(e) => setMomentDate(e.target.value)}
+                      max={new Date().toISOString().split('T')[0]}
+                      className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:border-moss focus:outline-none transition-colors"
+                    />
+                  </div>
+
+                  {/* Emotion Rating */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      How Did It Make You Feel? <span className="text-gray-400 font-normal">(Optional +1pt)</span>
+                    </label>
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4, 5].map((rating) => (
+                        <button
+                          key={rating}
+                          onClick={() => setEmotionRating(rating)}
+                          className={`flex-1 py-3 rounded-lg border-2 transition-all text-2xl ${
+                            emotionRating === rating
+                              ? 'bg-moss text-white border-moss scale-110'
+                              : 'bg-white border-gray-300 hover:border-moss hover:scale-105'
+                          }`}
+                        >
+                          {['😢', '😕', '😐', '😊', '😄'][rating - 1]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Photos */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Add Photos <span className="text-gray-400 font-normal">(Optional +1pt)</span>
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handlePhotoUpload}
+                      className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:border-moss focus:outline-none transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-moss/10 file:text-moss hover:file:bg-moss/20 file:cursor-pointer"
+                    />
+                    {uploading && <p className="text-sm text-gray-600 mt-2">Uploading photos...</p>}
+
+                    {/* Photo Preview Grid */}
+                    {uploadedPhotos.length > 0 && (
+                      <div className="grid grid-cols-3 gap-2 mt-3">
+                        {uploadedPhotos.map((photo) => (
+                          <div key={photo.id} className="relative group">
+                            <img
+                              src={photo.url}
+                              alt={photo.caption}
+                              className="w-full h-24 object-cover rounded-lg"
+                            />
+                            <button
+                              onClick={() => removePhoto(photo.id)}
+                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Notes */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Additional Notes <span className="text-gray-400 font-normal">(Optional)</span>
+                    </label>
+                    <textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Share more about this special moment..."
+                      rows={3}
+                      className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:border-moss focus:outline-none transition-colors resize-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="sticky bottom-0 bg-gray-50 p-6 rounded-b-2xl border-t border-gray-200">
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowModal(false)}
+                      className="flex-1 px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:border-gray-400 transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSubmitMoment}
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-moss to-sage text-white rounded-xl font-semibold hover:shadow-lg transition-all hover:scale-105 active:scale-95"
+                    >
+                      Save Moment (+{calculatePoints()} pts)
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </AnimatedPage>
   );

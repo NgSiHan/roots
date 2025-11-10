@@ -91,6 +91,19 @@ export interface CheckIn {
   treeId: string;
 }
 
+export interface PositiveMoment {
+  id: string;
+  activityName?: string;
+  participantIds: string[]; // Who was involved
+  date: string; // ISO date string
+  emotionRating?: number; // 1-5
+  notes?: string;
+  photos: Photo[]; // Array of photos
+  pointsEarned: number; // 1-5 based on details provided
+  timestamp: string; // When it was logged
+  treeId: string;
+}
+
 export interface AppState {
   activeFamilyTreeId: string;
   trees: FamilyTree[];
@@ -101,4 +114,5 @@ export interface AppState {
   lastExpandedAlbum: Record<string, string | null>; // keyed by tree id
   checkIns: CheckIn[]; // All check-ins across all trees
   notifications: CheckIn[]; // Recent check-ins to notify about
+  positiveMoments: PositiveMoment[]; // All logged positive moments
 }

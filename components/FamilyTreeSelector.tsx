@@ -18,6 +18,7 @@ export default function FamilyTreeSelector() {
     lastExpandedAlbum: {},
     checkIns: [],
     notifications: [],
+    positiveMoments: [],
   });
 
   const activeTree = appState.trees.find((t) => t.id === appState.activeFamilyTreeId);

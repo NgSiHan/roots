@@ -21,6 +21,7 @@ export default function MemoriesPage() {
     lastExpandedAlbum: {},
     checkIns: [],
     notifications: [],
+    positiveMoments: [],
   });
 
   // Safely access albums, initializing from albumsData if undefined
