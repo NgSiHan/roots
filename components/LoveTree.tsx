@@ -589,6 +589,7 @@ function AdultTreeStage({
   ];
 
   // Generate branch configurations dynamically - unlimited growth
+  // Create more organic, realistic branches with curves and slight drooping
   const generateBranchConfig = (idx: number) => {
     const isLeft = idx % 2 === 0;
     // Branches start at y=180 and go up by 40 units for each pair
@@ -599,33 +600,47 @@ function AdultTreeStage({
     const baseExtension = 105; // Base distance from trunk
     const widthGrowth = pairIndex * 15; // Each pair extends further out
 
+    // Add some variation to make branches less uniform
+    const angleVariation = (idx % 3) * 3 - 3; // -3, 0, or 3 degrees of variation
+    const lengthVariation = (idx % 4) * 5; // 0, 5, 10, or 15 units variation
+
     if (isLeft) {
-      // Left branch
-      const midY = trunkY - 15;
-      const endY = trunkY - 25;
+      // Left branch - organic curve with slight upward then drooping motion
       const startX = centerX - 15;
-      const midX = centerX - 40 - widthGrowth;
-      const endX = centerX - baseExtension - widthGrowth;
+      const control1X = centerX - 35 - widthGrowth * 0.3;
+      const control1Y = trunkY - 20 + angleVariation;
+      const control2X = centerX - 65 - widthGrowth * 0.7;
+      const control2Y = trunkY - 25 + angleVariation;
+      const control3X = centerX - 85 - widthGrowth;
+      const control3Y = trunkY - 15 + angleVariation; // Slight droop
+      const endX = centerX - baseExtension - widthGrowth - lengthVariation;
+      const endY = trunkY - 5 + angleVariation; // Droops down at the end
+
       return {
-        path: `M ${startX} ${trunkY} Q ${midX} ${midY} ${midX + 10} ${endY} L ${endX} ${endY - 10}`,
-        startX: midX + 10,
-        startY: endY,
+        path: `M ${startX} ${trunkY} C ${control1X} ${control1Y}, ${control2X} ${control2Y}, ${control3X} ${control3Y} S ${endX + 10} ${endY - 3}, ${endX} ${endY}`,
+        startX: control3X,
+        startY: control3Y,
         endX: endX,
-        endY: endY - 10,
+        endY: endY,
       };
     } else {
-      // Right branch
-      const midY = trunkY - 15;
-      const endY = trunkY - 25;
+      // Right branch - organic curve with slight upward then drooping motion
       const startX = centerX + 15;
-      const midX = centerX + 40 + widthGrowth;
-      const endX = centerX + baseExtension + widthGrowth;
+      const control1X = centerX + 35 + widthGrowth * 0.3;
+      const control1Y = trunkY - 20 + angleVariation;
+      const control2X = centerX + 65 + widthGrowth * 0.7;
+      const control2Y = trunkY - 25 + angleVariation;
+      const control3X = centerX + 85 + widthGrowth;
+      const control3Y = trunkY - 15 + angleVariation; // Slight droop
+      const endX = centerX + baseExtension + widthGrowth + lengthVariation;
+      const endY = trunkY - 5 + angleVariation; // Droops down at the end
+
       return {
-        path: `M ${startX} ${trunkY} Q ${midX} ${midY} ${midX - 10} ${endY} L ${endX} ${endY - 10}`,
-        startX: midX - 10,
-        startY: endY,
+        path: `M ${startX} ${trunkY} C ${control1X} ${control1Y}, ${control2X} ${control2Y}, ${control3X} ${control3Y} S ${endX - 10} ${endY - 3}, ${endX} ${endY}`,
+        startX: control3X,
+        startY: control3Y,
         endX: endX,
-        endY: endY - 10,
+        endY: endY,
       };
     }
   };
@@ -648,13 +663,16 @@ function AdultTreeStage({
     // Determine leaf capacity for this branch
     const branchCapacity = idx < 6 ? 10 : 20;
 
-    // Every odd branch ends with a fruit (if it has enough logs)
-    const isOddBranch = idx % 2 === 1;
-    const branchLeafCount = isOddBranch
+    // Scatter fruit across both left and right branches
+    // Pattern: skip every 3rd branch (idx % 3 !== 0)
+    // Since branches alternate left/right, this creates scattered fruit on both sides
+    // Result: branches 0, 1, 3, 4, 6, 7, 9, 10... get fruit (both L and R)
+    const shouldHaveFruit = idx % 3 !== 0;
+    const branchLeafCount = shouldHaveFruit
       ? Math.min(Math.max(0, logsAvailableForBranch - 1), branchCapacity - 1) // Save last log for fruit
       : Math.min(logsAvailableForBranch, branchCapacity);
 
-    const hasFruit = isOddBranch && logsAvailableForBranch >= branchCapacity;
+    const hasFruit = shouldHaveFruit && logsAvailableForBranch >= branchCapacity;
 
     return {
       ...config,

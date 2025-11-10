@@ -354,14 +354,17 @@ export default function TreePage() {
 
             {/* Zoomable tree container */}
             <div
-              className="overflow-auto max-h-[600px] rounded-xl bg-gradient-to-b from-sky-50 to-white p-4 flex items-center justify-center"
+              className="overflow-auto max-h-[600px] rounded-xl bg-gradient-to-b from-sky-50 to-white p-4"
               onWheel={handleWheel}
             >
               <div
                 style={{
                   transform: `scale(${zoom})`,
-                  transformOrigin: 'center center',
-                  transition: 'transform 0.2s ease-out'
+                  transformOrigin: 'top center',
+                  transition: 'transform 0.2s ease-out',
+                  minHeight: `${450 * zoom}px`,
+                  paddingTop: zoom > 1 ? `${(zoom - 1) * 200}px` : '0',
+                  paddingBottom: zoom > 1 ? `${(zoom - 1) * 100}px` : '0',
                 }}
               >
                 {mounted ? (
