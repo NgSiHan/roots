@@ -564,27 +564,25 @@ function AdultTreeStage({
 
   const branches = branchConfigs.slice(0, totalBranches).map((config, idx) => {
     const logStartIdx = 70 + idx * 10;
-    const branchLeafCount = Math.min(logCount - logStartIdx, 10);
+    const logsAvailableForBranch = logCount - logStartIdx;
+
+    // Every even branch (0, 2, 4) has 10 leaves
+    // Every odd branch (1, 3, 5) has 9 leaves + 1 fruit (if there are at least 10 logs)
+    const isOddBranch = idx % 2 === 1;
+    const branchLeafCount = isOddBranch
+      ? Math.min(Math.max(0, logsAvailableForBranch - 1), 9) // Save last log for fruit
+      : Math.min(logsAvailableForBranch, 10);
+
+    const hasFruit = isOddBranch && logsAvailableForBranch >= 10;
 
     return {
       ...config,
       leafCount: branchLeafCount,
-      active: branchLeafCount > 0,
+      active: branchLeafCount > 0 || hasFruit,
+      hasFruit,
+      fruitLog: hasFruit ? logs[logStartIdx + 9] : undefined, // 10th log becomes fruit
     };
   });
-
-  // Calculate which branches should have fruits (every 2 branches = every 20 logs)
-  const fruits: { branchIdx: number; log: PositiveMoment | undefined }[] = [];
-  for (let i = 0; i < Math.floor(totalBranches / 2); i++) {
-    const fruitBranchIdx = i * 2; // Fruit appears on every even branch (0, 2, 4, ...)
-    const fruitLogIdx = 70 + (i + 1) * 20 - 1; // One fruit every 20 logs
-    if (fruitLogIdx < logCount && fruitBranchIdx < branches.length) {
-      fruits.push({
-        branchIdx: fruitBranchIdx,
-        log: logs[fruitLogIdx],
-      });
-    }
-  }
 
   return (
     <svg width="340" height="420" viewBox="0 0 340 420" className="drop-shadow-2xl">
@@ -738,11 +736,9 @@ function AdultTreeStage({
               );
             })}
 
-            {/* Fruit at branch tip (every 2 branches = every 20 logs) */}
-            {fruits.find((f) => f.branchIdx === branchIdx) && (() => {
-              const fruit = fruits.find((f) => f.branchIdx === branchIdx)!;
-              const isStarred = fruit.log?.starred;
-
+            {/* Fruit at branch tip (last log of every 20 logs) */}
+            {branch.hasFruit && branch.fruitLog && (() => {
+              const fruitLog = branch.fruitLog;
               return (
                 <motion.g
                   initial={{ scale: 0, y: -20 }}
@@ -753,22 +749,22 @@ function AdultTreeStage({
                     type: 'spring',
                     bounce: 0.4
                   }}
-                  onClick={() => fruit.log && onElementClick(fruit.log.id)}
-                  style={{ cursor: fruit.log ? 'pointer' : 'default' }}
-                  className={fruit.log ? 'hover:opacity-80 transition-opacity' : ''}
+                  onClick={() => onElementClick(fruitLog.id)}
+                  style={{ cursor: 'pointer' }}
+                  className="hover:opacity-80 transition-opacity"
                 >
                   <circle
                     cx={branch.endX}
                     cy={branch.endY}
                     r="8"
-                    fill={isStarred ? "#FFD700" : "#D4574D"}
+                    fill={fruitLog.starred ? "#FFD700" : "#D4574D"}
                   />
                   <ellipse
                     cx={branch.endX - 2}
                     cy={branch.endY - 2}
                     rx="3.2"
                     ry="2.4"
-                    fill={isStarred ? "#FFF4CC" : "#E87069"}
+                    fill={fruitLog.starred ? "#FFF4CC" : "#E87069"}
                     opacity="0.7"
                   />
                   {/* Stem */}
@@ -781,7 +777,7 @@ function AdultTreeStage({
                     strokeWidth="1.5"
                   />
                   {/* Glowing indicator for starred logs */}
-                  {isStarred && (
+                  {fruitLog.starred && (
                     <motion.circle
                       cx={branch.endX}
                       cy={branch.endY}

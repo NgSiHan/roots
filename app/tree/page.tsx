@@ -381,21 +381,33 @@ export default function TreePage() {
             <div className="flex flex-wrap items-center justify-center gap-2">
               <button
                 onClick={() => jumpToStage(10)}
-                className="px-4 py-2 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 transition-all hover:scale-105 active:scale-95"
+                className="px-3 py-2 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-100 transition-all hover:scale-105 active:scale-95"
               >
-                → Sprout (10 logs)
+                Sprout (10)
               </button>
               <button
                 onClick={() => jumpToStage(20)}
-                className="px-4 py-2 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm font-medium hover:bg-green-100 transition-all hover:scale-105 active:scale-95"
+                className="px-3 py-2 bg-green-50 border border-green-200 text-green-700 rounded-lg text-xs font-medium hover:bg-green-100 transition-all hover:scale-105 active:scale-95"
               >
-                → Young Tree (20 logs)
+                Young Start (20)
+              </button>
+              <button
+                onClick={() => jumpToStage(60)}
+                className="px-3 py-2 bg-teal-50 border border-teal-200 text-teal-700 rounded-lg text-xs font-medium hover:bg-teal-100 transition-all hover:scale-105 active:scale-95"
+              >
+                Young End (60)
               </button>
               <button
                 onClick={() => jumpToStage(70)}
-                className="px-4 py-2 bg-purple-50 border border-purple-200 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-100 transition-all hover:scale-105 active:scale-95"
+                className="px-3 py-2 bg-purple-50 border border-purple-200 text-purple-700 rounded-lg text-xs font-medium hover:bg-purple-100 transition-all hover:scale-105 active:scale-95"
               >
-                → Adult Tree (70 logs)
+                Adult Start (70)
+              </button>
+              <button
+                onClick={() => jumpToStage(100)}
+                className="px-3 py-2 bg-pink-50 border border-pink-200 text-pink-700 rounded-lg text-xs font-medium hover:bg-pink-100 transition-all hover:scale-105 active:scale-95"
+              >
+                Adult Mid (100)
               </button>
             </div>
           </div>
