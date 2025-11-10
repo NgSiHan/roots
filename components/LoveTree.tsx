@@ -11,11 +11,15 @@ import { useMemo } from 'react';
  * Stage 4 (70+ logs): Adult tree with unlimited growth
  */
 
+import { PositiveMoment } from '@/lib/types';
+
 interface LoveTreeProps {
   score: number; // This is actually logCount now
+  logs: PositiveMoment[]; // All logs for this tree, sorted chronologically
+  onElementClick: (logId: string) => void; // Called when clicking a tree element
 }
 
-export default function LoveTree({ score }: LoveTreeProps) {
+export default function LoveTree({ score, logs, onElementClick }: LoveTreeProps) {
   const logCount = score; // score is actually logCount
 
   // Determine stage based on log count
@@ -42,10 +46,10 @@ export default function LoveTree({ score }: LoveTreeProps) {
           transition={{ duration: 0.5, ease: 'easeOut' }}
           className="relative"
         >
-          {stage === 1 && <SeedStage logCount={logCount} />}
-          {stage === 2 && <SproutStage logCount={logCount} />}
-          {stage === 3 && <YoungTreeStage logCount={logCount} />}
-          {stage === 4 && <AdultTreeStage logCount={logCount} />}
+          {stage === 1 && <SeedStage logCount={logCount} logs={logs} onElementClick={onElementClick} />}
+          {stage === 2 && <SproutStage logCount={logCount} logs={logs} onElementClick={onElementClick} />}
+          {stage === 3 && <YoungTreeStage logCount={logCount} logs={logs} onElementClick={onElementClick} />}
+          {stage === 4 && <AdultTreeStage logCount={logCount} logs={logs} onElementClick={onElementClick} />}
         </motion.div>
       </AnimatePresence>
 
@@ -65,7 +69,15 @@ export default function LoveTree({ score }: LoveTreeProps) {
 }
 
 // Stage 1: Seed with 10 individual roots (0-9 logs) - with branching
-function SeedStage({ logCount }: { logCount: number }) {
+function SeedStage({
+  logCount,
+  logs,
+  onElementClick,
+}: {
+  logCount: number;
+  logs: PositiveMoment[];
+  onElementClick: (logId: string) => void;
+}) {
   const rootCount = Math.min(logCount, 10);
 
   // 10 roots with branching pattern - each root has its own distinct endpoint
@@ -101,22 +113,45 @@ function SeedStage({ logCount }: { logCount: number }) {
         <ellipse cx="150" cy="200" rx="12" ry="16" fill="#A0826B" />
       </motion.g>
 
-      {/* 10 individual roots with branching pattern */}
+      {/* 10 individual roots with branching pattern - each root is clickable */}
       <g opacity="0.6">
-        {rootPaths.slice(0, rootCount).map((root, i) => (
-          <motion.path
-            key={i}
-            d={root.path}
-            stroke="#7A6F5D"
-            strokeWidth="2.5"
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 0.5, delay: 0.5 + i * 0.1 }}
-          />
-        ))}
+        {rootPaths.slice(0, rootCount).map((root, i) => {
+          const log = logs[i]; // Each root represents one log chronologically
+          const isStarred = log?.starred;
+
+          return (
+            <g key={i}>
+              <motion.path
+                d={root.path}
+                stroke={isStarred ? "#FFD700" : "#7A6F5D"}
+                strokeWidth={isStarred ? "3.5" : "2.5"}
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 0.5, delay: 0.5 + i * 0.1 }}
+                onClick={() => log && onElementClick(log.id)}
+                style={{ cursor: log ? 'pointer' : 'default' }}
+                className={log ? 'hover:opacity-80 transition-opacity' : ''}
+              />
+              {/* Glowing dot for starred logs */}
+              {isStarred && log && (
+                <motion.circle
+                  cx={rootPaths[i].path.split(' ').slice(-2, -1)[0]}
+                  cy={rootPaths[i].path.split(' ').slice(-1)[0]}
+                  r="4"
+                  fill="#FFD700"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: [1, 1.3, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                  onClick={() => onElementClick(log.id)}
+                  style={{ cursor: 'pointer' }}
+                />
+              )}
+            </g>
+          );
+        })}
       </g>
 
       {/* Tiny sprout emerging */}
@@ -144,7 +179,15 @@ function SeedStage({ logCount }: { logCount: number }) {
 }
 
 // Stage 2: Sprout with stem + 10 leaves (10-19 logs) - roots still visible
-function SproutStage({ logCount }: { logCount: number }) {
+function SproutStage({
+  logCount,
+  logs,
+  onElementClick,
+}: {
+  logCount: number;
+  logs: PositiveMoment[];
+  onElementClick: (logId: string) => void;
+}) {
   const leafCount = Math.min(logCount - 10, 10);
 
   // Keep all 10 roots from Seed stage - adjusted for Sprout ground level
@@ -194,12 +237,15 @@ function SproutStage({ logCount }: { logCount: number }) {
         transition={{ duration: 0.8 }}
       />
 
-      {/* Leaves alternating left/right with borders (10 total) - no overlap */}
+      {/* Leaves alternating left/right with borders (10 total) - clickable */}
       {Array.from({ length: leafCount }).map((_, i) => {
         const stemY = 230 - i * 15; // Increased spacing to prevent overlap
         const isLeft = i % 2 === 0;
         const x = isLeft ? 138 : 162; // Wider spacing from stem
         const rotation = isLeft ? -35 : 35; // More rotation for better visibility
+
+        const log = logs[10 + i]; // Leaves represent logs 10-19
+        const isStarred = log?.starred;
 
         return (
           <motion.g
@@ -209,21 +255,37 @@ function SproutStage({ logCount }: { logCount: number }) {
             transition={{ duration: 0.4, delay: 0.3 + i * 0.1 }}
           >
             {/* Leaf shape with pointed tip and rounded base */}
-            <g transform={`translate(${x}, ${stemY}) rotate(${rotation})`}>
+            <g
+              transform={`translate(${x}, ${stemY}) rotate(${rotation})`}
+              onClick={() => log && onElementClick(log.id)}
+              style={{ cursor: log ? 'pointer' : 'default' }}
+              className={log ? 'hover:opacity-80 transition-opacity' : ''}
+            >
               {/* Dark border leaf */}
               <path
                 d="M 0,-9 Q 5,-6 6,0 Q 5,8 0,9 Q -5,8 -6,0 Q -5,-6 0,-9 Z"
-                fill="#6B8E65"
-                stroke="#2D4A28"
-                strokeWidth="1.5"
+                fill={isStarred ? "#FFE066" : "#6B8E65"}
+                stroke={isStarred ? "#FFD700" : "#2D4A28"}
+                strokeWidth={isStarred ? "2" : "1.5"}
               />
               {/* Inner lighter leaf */}
               <path
                 d="M 0,-7.5 Q 4,-5 5,0 Q 4,6.5 0,7.5 Q -4,6.5 -5,0 Q -4,-5 0,-7.5 Z"
-                fill="#A8C69F"
+                fill={isStarred ? "#FFF4CC" : "#A8C69F"}
               />
               {/* Leaf vein */}
               <line x1="0" y1="-7" x2="0" y2="7" stroke="#6B8E65" strokeWidth="0.5" opacity="0.5" />
+              {/* Star indicator for starred logs */}
+              {isStarred && (
+                <motion.circle
+                  cx="0"
+                  cy="0"
+                  r="3"
+                  fill="#FFD700"
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                />
+              )}
             </g>
           </motion.g>
         );
@@ -233,7 +295,15 @@ function SproutStage({ logCount }: { logCount: number }) {
 }
 
 // Stage 3: Young Tree with 5 branches × 10 individual leaves each (20-69 logs)
-function YoungTreeStage({ logCount }: { logCount: number }) {
+function YoungTreeStage({
+  logCount,
+  logs,
+  onElementClick,
+}: {
+  logCount: number;
+  logs: PositiveMoment[];
+  onElementClick: (logId: string) => void;
+}) {
   // First branch starts with 10 leaves (from Sprout transition)
   // Each additional log adds to subsequent branches
   const totalLeaves = Math.min(logCount - 20 + 10, 60); // +10 for Sprout transition
@@ -320,8 +390,11 @@ function YoungTreeStage({ logCount }: { logCount: number }) {
       />
 
       {/* Branches with individual leaves alternating left/right */}
-      {branches.map((branch, branchIdx) =>
-        branch.active && (
+      {branches.map((branch, branchIdx) => {
+        // Calculate cumulative leaf index for this branch
+        const branchStartLeafIdx = branchIdx * 10;
+
+        return branch.active && (
           <g key={branchIdx}>
             {/* Branch path */}
             <motion.path
@@ -337,6 +410,12 @@ function YoungTreeStage({ logCount }: { logCount: number }) {
 
             {/* Individual leaves along the branch alternating sides - no overlap */}
             {Array.from({ length: branch.leafCount }).map((_, leafIdx) => {
+              // Calculate global leaf index
+              const globalLeafIdx = branchStartLeafIdx + leafIdx;
+              // Map to log: first 10 leaves (branch 0) map to logs 10-19, next 10 to logs 20-29, etc.
+              const log = logs[10 + globalLeafIdx];
+              const isStarred = log?.starred;
+
               // Distribute leaves with proper spacing along branch
               const progress = (leafIdx + 0.5) / 10; // 0.05 to 0.95 for better distribution
               const baseX = branch.startX + (branch.endX - branch.startX) * progress;
@@ -358,34 +437,58 @@ function YoungTreeStage({ logCount }: { logCount: number }) {
                   transition={{ duration: 0.3, delay: 0.5 + branchIdx * 0.1 + leafIdx * 0.05 }}
                 >
                   {/* Realistic leaf shape with pointed tip and rounded base */}
-                  <g transform={`translate(${baseX}, ${y}) rotate(${rotation})`}>
+                  <g
+                    transform={`translate(${baseX}, ${y}) rotate(${rotation})`}
+                    onClick={() => log && onElementClick(log.id)}
+                    style={{ cursor: log ? 'pointer' : 'default' }}
+                    className={log ? 'hover:opacity-80 transition-opacity' : ''}
+                  >
                     {/* Dark border leaf */}
                     <path
                       d="M 0,-4.5 Q 2.5,-3 3,0 Q 2.5,4 0,4.5 Q -2.5,4 -3,0 Q -2.5,-3 0,-4.5 Z"
-                      fill="#6B8E65"
-                      stroke="#2D4A28"
-                      strokeWidth="0.8"
+                      fill={isStarred ? "#FFE066" : "#6B8E65"}
+                      stroke={isStarred ? "#FFD700" : "#2D4A28"}
+                      strokeWidth={isStarred ? "1.2" : "0.8"}
                     />
                     {/* Inner lighter leaf */}
                     <path
                       d="M 0,-3.5 Q 2,-2.5 2.5,0 Q 2,3.5 0,4 Q -2,3.5 -2.5,0 Q -2,-2.5 0,-3.5 Z"
-                      fill="#A8C69F"
+                      fill={isStarred ? "#FFF4CC" : "#A8C69F"}
                     />
                     {/* Leaf vein */}
                     <line x1="0" y1="-3.5" x2="0" y2="4" stroke="#6B8E65" strokeWidth="0.3" opacity="0.5" />
+                    {/* Star indicator for starred logs */}
+                    {isStarred && (
+                      <motion.circle
+                        cx="0"
+                        cy="0"
+                        r="2"
+                        fill="#FFD700"
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                      />
+                    )}
                   </g>
                 </motion.g>
               );
             })}
           </g>
-        )
-      )}
+        );
+      })}
     </svg>
   );
 }
 
 // Stage 4: Adult tree with unlimited progressive growth (70+ logs)
-function AdultTreeStage({ logCount }: { logCount: number }) {
+function AdultTreeStage({
+  logCount,
+  logs,
+  onElementClick,
+}: {
+  logCount: number;
+  logs: PositiveMoment[];
+  onElementClick: (logId: string) => void;
+}) {
   const extraGrowth = Math.min((logCount - 70) / 10, 5); // Progressively denser
 
   return (
@@ -445,7 +548,7 @@ function AdultTreeStage({ logCount }: { logCount: number }) {
         <path d="M 172 120 Q 180 100 185 80" stroke="#8B6F47" strokeWidth="6" fill="none" strokeLinecap="round" />
       </motion.g>
 
-      {/* Lush foliage - grows denser with more logs */}
+      {/* Lush foliage - grows denser with more logs - clickable */}
       {[
         { cx: 80, cy: 165, r: 40 },
         { cx: 260, cy: 165, r: 40 },
@@ -463,21 +566,44 @@ function AdultTreeStage({ logCount }: { logCount: number }) {
         { cx: 220, cy: 145, r: 28 + extraGrowth * 2 },
         { cx: 150, cy: 100, r: 26 + extraGrowth * 2 },
         { cx: 190, cy: 100, r: 26 + extraGrowth * 2 },
-      ].map((cluster, i) => (
-        <motion.circle
-          key={i}
-          cx={cluster.cx}
-          cy={cluster.cy}
-          r={cluster.r}
-          fill="#7A9B76"
-          opacity="0.95"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.7 + i * 0.04 }}
-        />
-      ))}
+      ].map((cluster, i) => {
+        const log = logs[70 + i]; // Foliage clusters map to logs 70-85
+        const isStarred = log?.starred;
 
-      {/* Flowers - pink blossoms */}
+        return (
+          <motion.g key={i}>
+            <motion.circle
+              cx={cluster.cx}
+              cy={cluster.cy}
+              r={cluster.r}
+              fill={isStarred ? "#B8D4AA" : "#7A9B76"}
+              opacity="0.95"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.7 + i * 0.04 }}
+              onClick={() => log && onElementClick(log.id)}
+              style={{ cursor: log ? 'pointer' : 'default' }}
+              className={log ? 'hover:opacity-80 transition-opacity' : ''}
+            />
+            {/* Glowing star indicator for starred logs */}
+            {isStarred && log && (
+              <motion.circle
+                cx={cluster.cx}
+                cy={cluster.cy}
+                r="6"
+                fill="#FFD700"
+                initial={{ scale: 0 }}
+                animate={{ scale: [1, 1.3, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                onClick={() => onElementClick(log.id)}
+                style={{ cursor: 'pointer' }}
+              />
+            )}
+          </motion.g>
+        );
+      })}
+
+      {/* Flowers - pink blossoms - clickable */}
       {[
         { cx: 90, cy: 160, r: 6 },
         { cx: 250, cy: 170, r: 6 },
@@ -487,19 +613,50 @@ function AdultTreeStage({ logCount }: { logCount: number }) {
         { cx: 200, cy: 115, r: 6 },
         { cx: 165, cy: 75, r: 6 },
         { cx: 180, cy: 85, r: 6 },
-      ].map((flower, i) => (
-        <motion.g
-          key={`flower-${i}`}
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 0.4, delay: 1.2 + i * 0.1 }}
-        >
-          <circle cx={flower.cx} cy={flower.cy} r={flower.r} fill="#FFB6C1" />
-          <circle cx={flower.cx} cy={flower.cy} r={flower.r * 0.5} fill="#FFE4E8" />
-        </motion.g>
-      ))}
+      ].map((flower, i) => {
+        const log = logs[86 + i]; // Flowers map to logs 86-93
+        const isStarred = log?.starred;
 
-      {/* Fruits - red apples */}
+        return (
+          <motion.g
+            key={`flower-${i}`}
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.4, delay: 1.2 + i * 0.1 }}
+            onClick={() => log && onElementClick(log.id)}
+            style={{ cursor: log ? 'pointer' : 'default' }}
+            className={log ? 'hover:opacity-80 transition-opacity' : ''}
+          >
+            <circle
+              cx={flower.cx}
+              cy={flower.cy}
+              r={flower.r}
+              fill={isStarred ? "#FFD700" : "#FFB6C1"}
+            />
+            <circle
+              cx={flower.cx}
+              cy={flower.cy}
+              r={flower.r * 0.5}
+              fill={isStarred ? "#FFF9E6" : "#FFE4E8"}
+            />
+            {/* Glowing indicator for starred logs */}
+            {isStarred && (
+              <motion.circle
+                cx={flower.cx}
+                cy={flower.cy}
+                r={flower.r * 1.5}
+                fill="none"
+                stroke="#FFD700"
+                strokeWidth="1.5"
+                animate={{ scale: [1, 1.2, 1], opacity: [0.8, 0.4, 0.8] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              />
+            )}
+          </motion.g>
+        );
+      })}
+
+      {/* Fruits - red apples - clickable */}
       {[
         { cx: 75, cy: 180, r: 8 },
         { cx: 265, cy: 175, r: 8 },
@@ -507,38 +664,64 @@ function AdultTreeStage({ logCount }: { logCount: number }) {
         { cx: 235, cy: 150, r: 8 },
         { cx: 135, cy: 120, r: 8 },
         { cx: 205, cy: 125, r: 8 },
-      ].map((fruit, i) => (
-        <motion.g
-          key={`fruit-${i}`}
-          initial={{ scale: 0, y: -20 }}
-          animate={{ scale: 1, y: 0 }}
-          transition={{
-            duration: 0.5,
-            delay: 1.5 + i * 0.1,
-            type: 'spring',
-            bounce: 0.4
-          }}
-        >
-          <circle cx={fruit.cx} cy={fruit.cy} r={fruit.r} fill="#D4574D" />
-          <ellipse
-            cx={fruit.cx - 2}
-            cy={fruit.cy - 2}
-            rx={fruit.r * 0.4}
-            ry={fruit.r * 0.3}
-            fill="#E87069"
-            opacity="0.7"
-          />
-          {/* Stem */}
-          <line
-            x1={fruit.cx}
-            y1={fruit.cy - fruit.r}
-            x2={fruit.cx}
-            y2={fruit.cy - fruit.r - 3}
-            stroke="#8B6F47"
-            strokeWidth="1.5"
-          />
-        </motion.g>
-      ))}
+      ].map((fruit, i) => {
+        const log = logs[94 + i]; // Fruits map to logs 94-99
+        const isStarred = log?.starred;
+
+        return (
+          <motion.g
+            key={`fruit-${i}`}
+            initial={{ scale: 0, y: -20 }}
+            animate={{ scale: 1, y: 0 }}
+            transition={{
+              duration: 0.5,
+              delay: 1.5 + i * 0.1,
+              type: 'spring',
+              bounce: 0.4
+            }}
+            onClick={() => log && onElementClick(log.id)}
+            style={{ cursor: log ? 'pointer' : 'default' }}
+            className={log ? 'hover:opacity-80 transition-opacity' : ''}
+          >
+            <circle
+              cx={fruit.cx}
+              cy={fruit.cy}
+              r={fruit.r}
+              fill={isStarred ? "#FFD700" : "#D4574D"}
+            />
+            <ellipse
+              cx={fruit.cx - 2}
+              cy={fruit.cy - 2}
+              rx={fruit.r * 0.4}
+              ry={fruit.r * 0.3}
+              fill={isStarred ? "#FFF4CC" : "#E87069"}
+              opacity="0.7"
+            />
+            {/* Stem */}
+            <line
+              x1={fruit.cx}
+              y1={fruit.cy - fruit.r}
+              x2={fruit.cx}
+              y2={fruit.cy - fruit.r - 3}
+              stroke="#8B6F47"
+              strokeWidth="1.5"
+            />
+            {/* Glowing indicator for starred logs */}
+            {isStarred && (
+              <motion.circle
+                cx={fruit.cx}
+                cy={fruit.cy}
+                r={fruit.r * 1.5}
+                fill="none"
+                stroke="#FFD700"
+                strokeWidth="2"
+                animate={{ scale: [1, 1.3, 1], opacity: [0.8, 0.3, 0.8] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              />
+            )}
+          </motion.g>
+        );
+      })}
     </svg>
   );
 }

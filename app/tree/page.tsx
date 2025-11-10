@@ -2,6 +2,7 @@
 
 import AnimatedPage from '@/components/AnimatedPage';
 import LoveTree from '@/components/LoveTree';
+import LogDetailModal from '@/components/LogDetailModal';
 import { useLocalStorageState } from '@/hooks/useLocalStorageState';
 import { AppState, PositiveMoment, Photo } from '@/lib/types';
 import { initialTrees, activitySuggestions, memoryCollectionsData } from '@/lib/seedData';
@@ -29,6 +30,7 @@ export default function TreePage() {
   const [mounted, setMounted] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
 
   // Modal form state
   const [activityName, setActivityName] = useState('');
@@ -81,6 +83,33 @@ export default function TreePage() {
 
   // Mock data for days active - in real app would be calculated from timestamps
   const daysActive = 14;
+
+  // Get logs for current tree, sorted chronologically
+  const treeLogs = useMemo(() => {
+    return (appState.positiveMoments || [])
+      .filter((log) => log.treeId === appState.activeFamilyTreeId)
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  }, [appState.positiveMoments, appState.activeFamilyTreeId]);
+
+  const selectedLog = selectedLogId ? treeLogs.find((log) => log.id === selectedLogId) || null : null;
+  const selectedLogIndex = selectedLog ? treeLogs.findIndex((log) => log.id === selectedLogId) : -1;
+
+  // Toggle star on a log
+  const handleToggleStar = (logId: string) => {
+    const updatedMoments = appState.positiveMoments.map((log) =>
+      log.id === logId ? { ...log, starred: !log.starred } : log
+    );
+    setAppState({ ...appState, positiveMoments: updatedMoments });
+  };
+
+  // Navigate between logs chronologically
+  const handleNavigateLog = (direction: 'prev' | 'next') => {
+    if (selectedLogIndex === -1) return;
+    const newIndex = direction === 'prev' ? selectedLogIndex - 1 : selectedLogIndex + 1;
+    if (newIndex >= 0 && newIndex < treeLogs.length) {
+      setSelectedLogId(treeLogs[newIndex].id);
+    }
+  };
 
   // Update tree score
   const updateScore = (delta: number) => {
@@ -228,7 +257,11 @@ export default function TreePage() {
           {/* Tree visual */}
           <div className="mb-8">
             {mounted ? (
-              <LoveTree score={logCount} />
+              <LoveTree
+                score={logCount}
+                logs={treeLogs}
+                onElementClick={(logId) => setSelectedLogId(logId)}
+              />
             ) : (
               <div className="h-[450px] flex items-center justify-center">
                 <div className="text-gray-400">Loading tree...</div>
@@ -780,6 +813,19 @@ export default function TreePage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Log Detail Modal */}
+        {selectedLog && activeTree && (
+          <LogDetailModal
+            log={selectedLog}
+            familyMembers={activeTree.members}
+            onClose={() => setSelectedLogId(null)}
+            onToggleStar={handleToggleStar}
+            onNavigate={handleNavigateLog}
+            hasPrev={selectedLogIndex > 0}
+            hasNext={selectedLogIndex < treeLogs.length - 1}
+          />
+        )}
       </div>
     </AnimatedPage>
   );
