@@ -121,21 +121,26 @@ async function findVisualDuplicatesWithAI(photos: Photo[]): Promise<DuplicateGro
 
           if (!imageData1 || !imageData2) continue;
 
-          const prompt = `Compare these two images and determine if they are duplicates or very similar.
+          const prompt = `Analyze these two images and determine if they are duplicates or very similar photos.
 
-Consider:
-- Are they the same photo (exact duplicate)?
-- Are they similar photos from the same moment (burst photos, slightly different angles)?
-- Do they show the same scene/subject with minor variations?
+Consider them duplicates if:
+- They are the EXACT same photo (100% match)
+- They are from the same burst/series (same moment, slightly different timing)
+- They show the same scene/subject from nearly identical angles
+- They have minor differences like cropping, filters, or lighting adjustments
 
-Respond with ONLY a JSON object in this format:
+Rate similarity 0-100:
+- 100: Exact duplicate or burst photo from same second
+- 80-99: Same scene/subject, very similar composition
+- 60-79: Same scene but different angle/timing
+- Below 60: Different photos
+
+Respond ONLY with valid JSON:
 {
-  "isDuplicate": true/false,
-  "similarityScore": 0-100,
-  "reason": "Brief explanation"
-}
-
-Be strict: only mark as duplicates if they are clearly the same or nearly identical photos.`;
+  "isDuplicate": true,
+  "similarityScore": 95,
+  "reason": "Same photo from burst series"
+}`;
 
           const result = await model.generateContent([
             { text: prompt },
@@ -156,18 +161,34 @@ Be strict: only mark as duplicates if they are clearly the same or nearly identi
           const response = await result.response;
           const text = response.text();
 
-          // Parse JSON response
+          // Parse JSON response - try multiple parsing strategies
+          let analysis = null;
+
+          // Strategy 1: Find JSON object
           const jsonMatch = text.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
-            const analysis = JSON.parse(jsonMatch[0]);
-
-            if (analysis.isDuplicate && analysis.similarityScore >= 80) {
-              duplicates.push({
-                photo: candidate,
-                similarityScore: analysis.similarityScore,
-                reason: analysis.reason || 'Visually similar photos',
-              });
+            try {
+              analysis = JSON.parse(jsonMatch[0]);
+            } catch (e) {
+              console.error('Failed to parse JSON:', jsonMatch[0]);
             }
+          }
+
+          // Strategy 2: Try parsing entire text (in case it's already clean JSON)
+          if (!analysis) {
+            try {
+              analysis = JSON.parse(text.trim());
+            } catch (e) {
+              // Not valid JSON
+            }
+          }
+
+          if (analysis && analysis.isDuplicate && analysis.similarityScore >= 70) {
+            duplicates.push({
+              photo: candidate,
+              similarityScore: analysis.similarityScore,
+              reason: analysis.reason || 'Visually similar photos',
+            });
           }
         } catch (error) {
           console.error(`Error comparing photos ${original.id} and ${candidate.id}:`, error);

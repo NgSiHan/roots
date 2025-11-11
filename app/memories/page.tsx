@@ -73,22 +73,56 @@ export default function MemoriesPage() {
     setLightboxPhotoIndex(photoIndex);
   };
 
-  // Scan for duplicate photos
-  const handleScanDuplicates = async () => {
+  // Scan for duplicate photos (optionally within a specific album)
+  const handleScanDuplicates = async (albumId?: string) => {
     setIsScanning(true);
     setScanError(null);
 
     try {
-      // Collect all photos from all albums
+      // Collect photos from selected album(s)
       const allPhotos: Photo[] = [];
-      albums.forEach(album => {
+      const albumsToScan = albumId
+        ? albums.filter(a => a.id === albumId)
+        : albums;
+
+      albumsToScan.forEach(album => {
         album.memories.forEach(memory => {
           allPhotos.push(...memory.photos);
         });
       });
 
       if (allPhotos.length < 2) {
-        setScanError('Need at least 2 photos to scan for duplicates');
+        setScanError(
+          albumId
+            ? 'This album needs at least 2 photos to scan for duplicates'
+            : 'Need at least 2 photos to scan for duplicates'
+        );
+        setIsScanning(false);
+        return;
+      }
+
+      // Limit to prevent payload size issues (matching AI processing limit)
+      const MAX_PHOTOS_PER_SCAN = 20;
+      if (allPhotos.length > MAX_PHOTOS_PER_SCAN) {
+        setScanError(
+          albumId
+            ? `This album has too many photos (${allPhotos.length} photos). Maximum ${MAX_PHOTOS_PER_SCAN} photos per scan. Please organize into smaller albums.`
+            : `Too many photos to scan at once (${allPhotos.length} photos). Maximum ${MAX_PHOTOS_PER_SCAN} photos per scan. Please scan individual albums with fewer photos.`
+        );
+        setIsScanning(false);
+        return;
+      }
+
+      // Check total payload size to prevent string length errors
+      let payloadSize = 0;
+      try {
+        const testPayload = JSON.stringify({ photos: allPhotos });
+        payloadSize = testPayload.length;
+      } catch (e) {
+        setScanError(
+          `Photos are too large to scan (file sizes too big). ` +
+          `Try: 1) Reducing photo quality/size before upload, 2) Scanning fewer photos at once, or 3) Using smaller albums (max ${MAX_PHOTOS_PER_SCAN} photos).`
+        );
         setIsScanning(false);
         return;
       }
@@ -111,7 +145,11 @@ export default function MemoriesPage() {
       }
     } catch (error) {
       console.error('Error scanning for duplicates:', error);
-      setScanError('Network error - please check your connection');
+      if (error instanceof Error && error.message.includes('Invalid string length')) {
+        setScanError('Too many photos with large file sizes. Try scanning individual albums instead.');
+      } else {
+        setScanError('Network error - please check your connection');
+      }
     } finally {
       setIsScanning(false);
     }
@@ -325,11 +363,11 @@ export default function MemoriesPage() {
           </Link>
           <div className="flex gap-3">
             <button
-              onClick={handleScanDuplicates}
+              onClick={() => handleScanDuplicates()}
               disabled={isScanning || albums.length === 0}
               className="px-5 py-2.5 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-all hover:scale-105 active:scale-95 shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              {isScanning ? '🔍 Scanning...' : '🔍 Scan for Duplicates'}
+              {isScanning ? '🔍 Scanning...' : '🔍 Scan All Albums'}
             </button>
             <button
               onClick={() => setShowAddAlbumModal(true)}
@@ -419,6 +457,8 @@ export default function MemoriesPage() {
                 isDeleteConfirmAlbum={deleteConfirmAlbum === album.id}
                 onDeleteMemory={(memoryId) => handleDeleteMemory(album.id, memoryId)}
                 deleteConfirmMemory={deleteConfirmMemory}
+                onScanAlbum={() => handleScanDuplicates(album.id)}
+                isScanning={isScanning}
               />
             ))}
           </div>
@@ -740,6 +780,8 @@ function AlbumAccordion({
   isDeleteConfirmAlbum,
   onDeleteMemory,
   deleteConfirmMemory,
+  onScanAlbum,
+  isScanning,
 }: {
   album: Album;
   index: number;
@@ -751,6 +793,8 @@ function AlbumAccordion({
   isDeleteConfirmAlbum: boolean;
   onDeleteMemory: (memoryId: string) => void;
   deleteConfirmMemory: { albumId: string; memoryId: string } | null;
+  onScanAlbum: () => void;
+  isScanning: boolean;
 }) {
   return (
     <motion.div
@@ -780,6 +824,17 @@ function AlbumAccordion({
           </div>
         </button>
         <div className="flex items-center gap-3">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onScanAlbum();
+            }}
+            disabled={isScanning}
+            className="text-sm px-3 py-2 bg-purple-100 text-purple-600 rounded-lg transition-all hover:bg-purple-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Scan this album for duplicates"
+          >
+            {isScanning ? '🔍 ...' : '🔍 Scan'}
+          </button>
           <button
             onClick={(e) => {
               e.stopPropagation();
