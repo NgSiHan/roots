@@ -144,7 +144,7 @@ export default function StarredPage() {
                       <div className="flex gap-1">
                         {Array.from({ length: 5 }).map((_, i) => (
                           <span key={i} className="text-lg">
-                            {i < log.emotionRating ? '😊' : '😐'}
+                            {i < (log.emotionRating || 0) ? '😊' : '😐'}
                           </span>
                         ))}
                       </div>

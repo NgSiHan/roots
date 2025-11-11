@@ -48,11 +48,53 @@ export default function ActivitiesPage() {
   const [showProposeModal, setShowProposeModal] = useState(false);
   const [showInactivityPrompt, setShowInactivityPrompt] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lastFailedTime, setLastFailedTime] = useState<number | null>(null);
 
   // Prevent hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Get completed activity IDs
+  const completedActivityIds = useMemo(() => {
+    return new Set(activeTree?.completedActivities?.map(ca => ca.activityId) || []);
+  }, [activeTree?.completedActivities]);
+
+  // Auto-refill activities when running low
+  useEffect(() => {
+    if (!mounted) return;
+
+    const availableActivities = appState.activitySuggestions.filter(
+      a => !completedActivityIds.has(a.id)
+    );
+
+    // Circuit breaker: stop trying after 3 failed attempts
+    const MAX_FAILED_ATTEMPTS = 3;
+    const COOLDOWN_PERIOD = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+    // Check if we're in cooldown period after multiple failures
+    const isInCooldown = lastFailedTime && (Date.now() - lastFailedTime < COOLDOWN_PERIOD);
+
+    // Trigger auto-refill if:
+    // 1. Less than 5 activities available
+    // 2. Not already generating
+    // 3. Haven't exceeded max failed attempts OR cooldown period has passed
+    if (
+      availableActivities.length < 5 &&
+      !isGenerating &&
+      (failedAttempts < MAX_FAILED_ATTEMPTS || !isInCooldown)
+    ) {
+      // Reset failed attempts if cooldown has passed
+      if (isInCooldown === false && failedAttempts >= MAX_FAILED_ATTEMPTS) {
+        setFailedAttempts(0);
+        setLastFailedTime(null);
+      }
+      generateNewActivities();
+    }
+  }, [mounted, appState.activitySuggestions, completedActivityIds, isGenerating, failedAttempts, lastFailedTime]);
 
   // Check for inactivity (>7 days since last activity)
   useEffect(() => {
@@ -71,11 +113,6 @@ export default function ActivitiesPage() {
       setShowInactivityPrompt(true);
     }
   }, [activeTree?.lastActivityDate, mounted]);
-
-  // Get completed activity IDs
-  const completedActivityIds = useMemo(() => {
-    return new Set(activeTree?.completedActivities?.map(ca => ca.activityId) || []);
-  }, [activeTree?.completedActivities]);
 
   // Filter activities
   const filteredActivities = useMemo(() => {
@@ -152,6 +189,69 @@ export default function ActivitiesPage() {
     }, 400);
   };
 
+  // Generate new activities using AI
+  const generateNewActivities = async () => {
+    if (isGenerating) return;
+
+    setIsGenerating(true);
+    setGenerationError(null);
+
+    try {
+      const response = await fetch('/api/activities/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          completedActivities: activeTree?.completedActivities || [],
+          existingActivities: appState.activitySuggestions,
+          count: 5,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.activities && data.activities.length > 0) {
+        // Add new activities to the list
+        setAppState({
+          ...appState,
+          activitySuggestions: [...appState.activitySuggestions, ...data.activities],
+        });
+
+        // Reset failure counter on success
+        setFailedAttempts(0);
+        setLastFailedTime(null);
+      } else {
+        // Increment failure counter
+        const newFailedAttempts = failedAttempts + 1;
+        setFailedAttempts(newFailedAttempts);
+        setLastFailedTime(Date.now());
+
+        const errorMsg = data.error || 'Failed to generate activities';
+        if (newFailedAttempts >= 3) {
+          setGenerationError(`${errorMsg}. Auto-generation paused for 5 minutes. You can still click "AI Generate" to retry manually.`);
+        } else {
+          setGenerationError(errorMsg);
+        }
+      }
+    } catch (error) {
+      console.error('Error generating activities:', error);
+
+      // Increment failure counter
+      const newFailedAttempts = failedAttempts + 1;
+      setFailedAttempts(newFailedAttempts);
+      setLastFailedTime(Date.now());
+
+      if (newFailedAttempts >= 3) {
+        setGenerationError('Network error. Auto-generation paused for 5 minutes. You can still click "AI Generate" to retry manually.');
+      } else {
+        setGenerationError('Network error - please check your connection');
+      }
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const completed = activeTree?.activities.completed || 0;
   const skipped = activeTree?.activities.skipped || 0;
 
@@ -200,13 +300,72 @@ export default function ActivitiesPage() {
               <span className="text-sm font-semibold text-gray-700">Skip: {skipped}</span>
             </div>
           </div>
-          <button
-            onClick={() => setShowProposeModal(true)}
-            className="px-5 py-2.5 bg-moss text-white rounded-xl font-semibold hover:bg-moss/90 transition-all hover:scale-105 active:scale-95 shadow-md"
-          >
-            + Propose Activity
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                // Allow manual generation even if auto-generation is paused
+                generateNewActivities();
+              }}
+              disabled={isGenerating}
+              className="px-5 py-2.5 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-all hover:scale-105 active:scale-95 shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              title={failedAttempts >= 3 ? 'Auto-generation paused, click to retry manually' : 'Generate new activities with AI'}
+            >
+              {isGenerating ? '✨ Generating...' : '✨ AI Generate'}
+            </button>
+            <button
+              onClick={() => setShowProposeModal(true)}
+              className="px-5 py-2.5 bg-moss text-white rounded-xl font-semibold hover:bg-moss/90 transition-all hover:scale-105 active:scale-95 shadow-md"
+            >
+              + Propose Activity
+            </button>
+          </div>
         </div>
+
+        {/* AI Generation Error */}
+        <AnimatePresence>
+          {generationError && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-4 p-4 bg-red-50 border-2 border-red-200 rounded-xl"
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-red-800">{generationError}</p>
+                <button
+                  onClick={() => setGenerationError(null)}
+                  className="text-red-600 hover:text-red-800"
+                >
+                  ✕
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* AI Generation Loading */}
+        <AnimatePresence>
+          {isGenerating && (
+            <motion.div
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              className="mb-6 p-5 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl shadow-md"
+            >
+              <div className="flex items-center gap-4">
+                <div className="text-3xl animate-spin">✨</div>
+                <div>
+                  <h3 className="font-bold text-gray-800 mb-1">
+                    Generating personalized activities...
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Our AI is creating activities based on your preferences!
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Smart Family Prompt for Inactivity */}
         <AnimatePresence>
