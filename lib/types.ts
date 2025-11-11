@@ -11,6 +11,7 @@ export interface FamilyTree {
   members: Person[];
   activities: ActivityStats;
   completedActivities?: CompletedActivity[]; // Track completed activities with timestamps
+  skippedActivities?: CompletedActivity[]; // Track skipped activities with timestamps
   lastActivityDate?: string; // ISO date string of last completed activity
 }
 

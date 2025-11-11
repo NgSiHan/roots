@@ -64,12 +64,17 @@ export default function ActivitiesPage() {
     return new Set(activeTree?.completedActivities?.map(ca => ca.activityId) || []);
   }, [activeTree?.completedActivities]);
 
+  // Get skipped activity IDs
+  const skippedActivityIds = useMemo(() => {
+    return new Set(activeTree?.skippedActivities?.map(sa => sa.activityId) || []);
+  }, [activeTree?.skippedActivities]);
+
   // Auto-refill activities when running low
   useEffect(() => {
     if (!mounted) return;
 
     const availableActivities = appState.activitySuggestions.filter(
-      a => !completedActivityIds.has(a.id)
+      a => !completedActivityIds.has(a.id) && !skippedActivityIds.has(a.id)
     );
 
     // Circuit breaker: stop trying after 3 failed attempts
@@ -95,7 +100,7 @@ export default function ActivitiesPage() {
       }
       generateNewActivities();
     }
-  }, [mounted, appState.activitySuggestions, completedActivityIds, isGenerating, failedAttempts, lastFailedTime]);
+  }, [mounted, appState.activitySuggestions, completedActivityIds, skippedActivityIds, isGenerating, failedAttempts, lastFailedTime]);
 
   // Check for inactivity (>7 days since last activity)
   useEffect(() => {
@@ -123,15 +128,15 @@ export default function ActivitiesPage() {
       activities = activities.filter(a => completedActivityIds.has(a.id));
     } else if (filter !== 'all') {
       activities = activities.filter(a => a.category === filter);
-      // Exclude completed activities when filtering by category
-      activities = activities.filter(a => !completedActivityIds.has(a.id));
+      // Exclude completed and skipped activities when filtering by category
+      activities = activities.filter(a => !completedActivityIds.has(a.id) && !skippedActivityIds.has(a.id));
     } else {
-      // For 'all', show only non-completed activities
-      activities = activities.filter(a => !completedActivityIds.has(a.id));
+      // For 'all', show only non-completed and non-skipped activities
+      activities = activities.filter(a => !completedActivityIds.has(a.id) && !skippedActivityIds.has(a.id));
     }
 
     return activities;
-  }, [appState.activitySuggestions, filter, completedActivityIds]);
+  }, [appState.activitySuggestions, filter, completedActivityIds, skippedActivityIds]);
 
   const handleComplete = (activityId: string) => {
     setDismissingId(activityId);
@@ -173,12 +178,19 @@ export default function ActivitiesPage() {
     setTimeout(() => {
       const updatedTrees = appState.trees.map((tree) => {
         if (tree.id === appState.activeFamilyTreeId) {
+          const skippedActivity: CompletedActivity = {
+            activityId,
+            completedAt: new Date().toISOString(),
+            participantIds: tree.members.map(m => m.id),
+          };
+
           return {
             ...tree,
             activities: {
               ...tree.activities,
               skipped: tree.activities.skipped + 1,
             },
+            skippedActivities: [...(tree.skippedActivities || []), skippedActivity],
           };
         }
         return tree;
