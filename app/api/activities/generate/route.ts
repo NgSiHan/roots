@@ -139,8 +139,9 @@ function buildPrompt(preferences: ActivityPreferences, existingActivities: Activ
 ## Requirements:
 1. Create variations and similar activities based on what they enjoy
 2. Focus more on their preferred categories (${topCategoryNames})
-3. Each activity should be unique and not duplicate existing ones
+3. Each activity can be unique or be a duplicate existing ones
 4. Include a mix of their favorites and new ideas to try
+5. Ensure that there is only one category per activity
 
 ## Existing Activities (DO NOT duplicate these exact titles):
 ${existingActivities.slice(0, 15).map(a => `- ${a.title}`).join('\n')}
