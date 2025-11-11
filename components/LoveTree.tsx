@@ -40,43 +40,41 @@ export default function LoveTree({ score, logs, onElementClick, familyMembers = 
 
   // Mouse event handlers for tooltip
   const handleMouseEnter = (e: React.MouseEvent, log: PositiveMoment) => {
+    // Only show tooltip for starred logs
+    if (!log.starred) return;
+
     // Use clientX/clientY for viewport-relative positioning
-    // Keep tooltip close to cursor with small offset
     const tooltipWidth = 220; // Approximate tooltip width
-    const tooltipHeight = 100; // Approximate tooltip height
-    const offset = 10;
+    const tooltipHeight = 150; // Increased to account for all content
+    const offset = 8;
+    const edgePadding = 10; // Padding from viewport edges
 
+    // Default: position to the right and above cursor
     let x = e.clientX + offset;
-    let y = e.clientY - offset;
+    let y = e.clientY - tooltipHeight - offset;
 
-    // Keep tooltip within viewport bounds
-    if (x + tooltipWidth > window.innerWidth) {
+    // Check if tooltip goes off the right edge
+    if (x + tooltipWidth + edgePadding > window.innerWidth) {
       x = e.clientX - tooltipWidth - offset;
     }
-    if (y - tooltipHeight < 0) {
+
+    // Check if tooltip goes off the left edge
+    if (x < edgePadding) {
+      x = edgePadding;
+    }
+
+    // Check if tooltip goes off the top edge
+    if (y < edgePadding) {
       y = e.clientY + offset;
+    }
+
+    // Check if tooltip goes off the bottom edge
+    if (y + tooltipHeight + edgePadding > window.innerHeight) {
+      y = window.innerHeight - tooltipHeight - edgePadding;
     }
 
     setTooltipPosition({ x, y });
     setHoveredLog(log);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent, log: PositiveMoment) => {
-    const tooltipWidth = 220;
-    const tooltipHeight = 100;
-    const offset = 10;
-
-    let x = e.clientX + offset;
-    let y = e.clientY - offset;
-
-    if (x + tooltipWidth > window.innerWidth) {
-      x = e.clientX - tooltipWidth - offset;
-    }
-    if (y - tooltipHeight < 0) {
-      y = e.clientY + offset;
-    }
-
-    setTooltipPosition({ x, y });
   };
 
   const handleMouseLeave = () => {
@@ -157,7 +155,7 @@ export default function LoveTree({ score, logs, onElementClick, familyMembers = 
                 </div>
               )}
               <div className="flex items-center gap-1">
-                {Array.from({ length: hoveredLog.emotionRating }).map((_, i) => (
+                {Array.from({ length: hoveredLog.emotionRating || 0 }).map((_, i) => (
                   <span key={i} className="text-[10px]">😊</span>
                 ))}
               </div>
