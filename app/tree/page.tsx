@@ -26,6 +26,7 @@ export default function TreePage() {
     checkIns: [],
     notifications: [],
     positiveMoments: [],
+    discardedPhotos: [],
   });
 
   const [mounted, setMounted] = useState(false);

@@ -27,6 +27,7 @@ export default function CheckInPage() {
     checkIns: [],
     notifications: [],
     positiveMoments: [],
+    discardedPhotos: [],
   });
 
   const activeTree = appState.trees.find((t) => t.id === appState.activeFamilyTreeId);

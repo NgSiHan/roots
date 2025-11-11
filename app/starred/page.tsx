@@ -23,6 +23,7 @@ export default function StarredPage() {
     checkIns: [],
     notifications: [],
     positiveMoments: [],
+    discardedPhotos: [],
   });
 
   const [mounted, setMounted] = useState(false);

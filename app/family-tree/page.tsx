@@ -491,6 +491,7 @@ export default function FamilyTreePage() {
     checkIns: [],
     notifications: [],
     positiveMoments: [],
+    discardedPhotos: [],
   });
 
   // Local state for viewing different trees on this page only
